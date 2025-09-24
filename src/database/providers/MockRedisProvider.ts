@@ -1,0 +1,806 @@
+/**
+ * PowerScript Mock Redis Provider
+ * Mock implementation of Redis database provider for testing
+ */
+
+import {
+    DatabaseProvider, DatabaseConfig, WhereClause, QueryOptions, 
+    QueryResult, SingleResult, Transaction, ModelDefinition, 
+    Migration, MigrationResult, ConnectionError, QueryError
+} from '../types';
+
+export class MockRedisProvider implements DatabaseProvider {
+    public readonly name = 'MockRedisProvider';
+    public readonly version = '1.0.0';
+    public readonly type = 'cache' as const;
+    
+    private connected = false;
+    private config: DatabaseConfig;
+    private mockData: Map<string, any> = new Map();
+    private mockExpiration: Map<string, number> = new Map();
+    private transactionCounter = 0;
+    
+    constructor(config: DatabaseConfig) {
+        this.config = config;
+        this.initializeMockData();
+        
+        // Cleanup expired keys periodically
+        setInterval(() => this.cleanupExpiredKeys(), 10000);
+    }
+    
+    async connect(): Promise<void> {
+        // Simulate connection delay
+        await this.sleep(30);
+        
+        if (this.config.connection.host === 'invalid-host') {
+            throw new ConnectionError('Failed to connect to Redis server', 'REDIS_CONNECTION_FAILED');
+        }
+        
+        this.connected = true;
+    }
+    
+    async disconnect(): Promise<void> {
+        await this.sleep(15);
+        this.connected = false;
+    }
+    
+    isConnected(): boolean {
+        return this.connected;
+    }
+    
+    async ping(): Promise<boolean> {
+        if (!this.connected) return false;
+        
+        try {
+            await this.sleep(5);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+    
+    // Redis-specific methods
+    async get(key: string): Promise<string | null> {
+        this.ensureConnected();
+        
+        if (this.isExpired(key)) {
+            this.mockData.delete(key);
+            this.mockExpiration.delete(key);
+            return null;
+        }
+        
+        return this.mockData.get(key) || null;
+    }
+    
+    async set(key: string, value: string, options?: { ttl?: number }): Promise<void> {
+        this.ensureConnected();
+        
+        this.mockData.set(key, value);
+        
+        if (options?.ttl) {
+            this.mockExpiration.set(key, Date.now() + options.ttl * 1000);
+        }
+    }
+    
+    async del(key: string | string[]): Promise<number> {
+        this.ensureConnected();
+        
+        const keys = Array.isArray(key) ? key : [key];
+        let deletedCount = 0;
+        
+        for (const k of keys) {
+            if (this.mockData.has(k)) {
+                this.mockData.delete(k);
+                this.mockExpiration.delete(k);
+                deletedCount++;
+            }
+        }
+        
+        return deletedCount;
+    }
+    
+    async exists(key: string | string[]): Promise<boolean> {
+        this.ensureConnected();
+        
+        const keys = Array.isArray(key) ? key : [key];
+        
+        for (const k of keys) {
+            if (this.isExpired(k)) {
+                this.mockData.delete(k);
+                this.mockExpiration.delete(k);
+                continue;
+            }
+            
+            if (this.mockData.has(k)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    async ttl(key: string): Promise<number> {
+        this.ensureConnected();
+        
+        if (!this.mockData.has(key)) {
+            return -2; // Key doesn't exist
+        }
+        
+        const expiration = this.mockExpiration.get(key);
+        if (!expiration) {
+            return -1; // Key exists but has no expiration
+        }
+        
+        const remaining = Math.max(0, Math.floor((expiration - Date.now()) / 1000));
+        return remaining;
+    }
+    
+    async expire(key: string, seconds: number): Promise<boolean> {
+        this.ensureConnected();
+        
+        if (!this.mockData.has(key)) {
+            return false;
+        }
+        
+        this.mockExpiration.set(key, Date.now() + seconds * 1000);
+        return true;
+    }
+    
+    async incr(key: string): Promise<number> {
+        this.ensureConnected();
+        
+        const current = parseInt(this.mockData.get(key) || '0', 10);
+        const newValue = current + 1;
+        this.mockData.set(key, newValue.toString());
+        
+        return newValue;
+    }
+    
+    async decr(key: string): Promise<number> {
+        this.ensureConnected();
+        
+        const current = parseInt(this.mockData.get(key) || '0', 10);
+        const newValue = current - 1;
+        this.mockData.set(key, newValue.toString());
+        
+        return newValue;
+    }
+    
+    async hget(key: string, field: string): Promise<string | null> {
+        this.ensureConnected();
+        
+        if (this.isExpired(key)) {
+            this.mockData.delete(key);
+            this.mockExpiration.delete(key);
+            return null;
+        }
+        
+        const hash = this.mockData.get(key);
+        if (typeof hash === 'object' && hash !== null) {
+            return hash[field] || null;
+        }
+        
+        return null;
+    }
+    
+    async hset(key: string, field: string, value: string): Promise<void> {
+        this.ensureConnected();
+        
+        let hash = this.mockData.get(key);
+        if (typeof hash !== 'object' || hash === null) {
+            hash = {};
+        }
+        
+        hash[field] = value;
+        this.mockData.set(key, hash);
+    }
+    
+    async hgetall(key: string): Promise<Record<string, string> | null> {
+        this.ensureConnected();
+        
+        if (this.isExpired(key)) {
+            this.mockData.delete(key);
+            this.mockExpiration.delete(key);
+            return null;
+        }
+        
+        const hash = this.mockData.get(key);
+        if (typeof hash === 'object' && hash !== null) {
+            return hash;
+        }
+        
+        return null;
+    }
+    
+    async lpush(key: string, ...values: string[]): Promise<number> {
+        this.ensureConnected();
+        
+        let list = this.mockData.get(key);
+        if (!Array.isArray(list)) {
+            list = [];
+        }
+        
+        list.unshift(...values);
+        this.mockData.set(key, list);
+        
+        return list.length;
+    }
+    
+    async rpush(key: string, ...values: string[]): Promise<number> {
+        this.ensureConnected();
+        
+        let list = this.mockData.get(key);
+        if (!Array.isArray(list)) {
+            list = [];
+        }
+        
+        list.push(...values);
+        this.mockData.set(key, list);
+        
+        return list.length;
+    }
+    
+    async lpop(key: string): Promise<string | null> {
+        this.ensureConnected();
+        
+        const list = this.mockData.get(key);
+        if (!Array.isArray(list) || list.length === 0) {
+            return null;
+        }
+        
+        const value = list.shift();
+        this.mockData.set(key, list);
+        
+        return value || null;
+    }
+    
+    async rpop(key: string): Promise<string | null> {
+        this.ensureConnected();
+        
+        const list = this.mockData.get(key);
+        if (!Array.isArray(list) || list.length === 0) {
+            return null;
+        }
+        
+        const value = list.pop();
+        this.mockData.set(key, list);
+        
+        return value || null;
+    }
+    
+    async llen(key: string): Promise<number> {
+        this.ensureConnected();
+        
+        const list = this.mockData.get(key);
+        if (!Array.isArray(list)) {
+            return 0;
+        }
+        
+        return list.length;
+    }
+    
+    async sadd(key: string, ...members: string[]): Promise<number> {
+        this.ensureConnected();
+        
+        let set = this.mockData.get(key);
+        if (!(set instanceof Set)) {
+            set = new Set();
+        }
+        
+        let addedCount = 0;
+        for (const member of members) {
+            if (!set.has(member)) {
+                set.add(member);
+                addedCount++;
+            }
+        }
+        
+        this.mockData.set(key, set);
+        return addedCount;
+    }
+    
+    async srem(key: string, ...members: string[]): Promise<number> {
+        this.ensureConnected();
+        
+        const set = this.mockData.get(key);
+        if (!(set instanceof Set)) {
+            return 0;
+        }
+        
+        let removedCount = 0;
+        for (const member of members) {
+            if (set.has(member)) {
+                set.delete(member);
+                removedCount++;
+            }
+        }
+        
+        this.mockData.set(key, set);
+        return removedCount;
+    }
+    
+    async smembers(key: string): Promise<string[]> {
+        this.ensureConnected();
+        
+        const set = this.mockData.get(key);
+        if (!(set instanceof Set)) {
+            return [];
+        }
+        
+        return Array.from(set);
+    }
+    
+    async sismember(key: string, member: string): Promise<boolean> {
+        this.ensureConnected();
+        
+        const set = this.mockData.get(key);
+        if (!(set instanceof Set)) {
+            return false;
+        }
+        
+        return set.has(member);
+    }
+    
+    // Generic database interface methods (adapted for Redis)
+    async query<T = any>(command: string, params?: any[]): Promise<QueryResult<T>> {
+        this.ensureConnected();
+        
+        const startTime = Date.now();
+        await this.sleep(Math.random() * 10);
+        
+        // Mock Redis command execution
+        const result = await this.executeRedisCommand(command, params);
+        const duration = Date.now() - startTime;
+        
+        return {
+            data: Array.isArray(result) ? result : [result],
+            count: Array.isArray(result) ? result.length : 1,
+            metadata: {
+                executionTime: duration,
+                cached: true,
+                query: command,
+                parameters: params
+            }
+        };
+    }
+    
+    async execute(command: string, params?: any[]): Promise<QueryResult<any>> {
+        return this.query(command, params);
+    }
+    
+    async findOne<T = any>(key: string, where?: WhereClause): Promise<SingleResult<T>> {
+        this.ensureConnected();
+        
+        const startTime = Date.now();
+        await this.sleep(Math.random() * 5);
+        
+        const value = await this.get(key);
+        let data: T | null = null;
+        
+        if (value !== null) {
+            try {
+                data = JSON.parse(value) as T;
+            } catch {
+                data = value as any;
+            }
+        }
+        
+        const duration = Date.now() - startTime;
+        
+        return {
+            data,
+            metadata: {
+                executionTime: duration,
+                cached: true,
+                found: data !== null
+            }
+        };
+    }
+    
+    async findMany<T = any>(pattern: string, where?: WhereClause, options?: QueryOptions): Promise<QueryResult<T>> {
+        this.ensureConnected();
+        
+        const startTime = Date.now();
+        await this.sleep(Math.random() * 15);
+        
+        // Simple pattern matching for Redis keys
+        const keys = Array.from(this.mockData.keys()).filter(key => {
+            if (pattern === '*') return true;
+            return key.includes(pattern.replace('*', ''));
+        });
+        
+        const results: T[] = [];
+        for (const key of keys) {
+            if (this.isExpired(key)) {
+                this.mockData.delete(key);
+                this.mockExpiration.delete(key);
+                continue;
+            }
+            
+            const value = this.mockData.get(key);
+            try {
+                results.push(JSON.parse(value));
+            } catch {
+                results.push(value);
+            }
+        }
+        
+        // Apply options
+        let finalResults = results;
+        if (options?.offset) {
+            finalResults = finalResults.slice(options.offset);
+        }
+        if (options?.limit) {
+            finalResults = finalResults.slice(0, options.limit);
+        }
+        
+        const duration = Date.now() - startTime;
+        
+        return {
+            data: finalResults,
+            count: finalResults.length,
+            totalCount: results.length,
+            hasMore: options?.limit ? results.length > (options.offset || 0) + options.limit : false,
+            metadata: {
+                executionTime: duration,
+                cached: true
+            }
+        };
+    }
+    
+    async insert<T = any>(key: string, data: Partial<T>): Promise<QueryResult<T>> {
+        this.ensureConnected();
+        
+        const startTime = Date.now();
+        await this.sleep(Math.random() * 8);
+        
+        const value = typeof data === 'string' ? data : JSON.stringify(data);
+        await this.set(key, value);
+        
+        const duration = Date.now() - startTime;
+        
+        return {
+            data: [data as T],
+            count: 1,
+            metadata: {
+                executionTime: duration,
+                cached: true,
+                insertId: key
+            }
+        };
+    }
+    
+    async update<T = any>(key: string, updateData: Partial<T>, where?: WhereClause): Promise<QueryResult<T>> {
+        const existingResult = await this.findOne<T>(key);
+        
+        if (!existingResult.data) {
+            return {
+                data: [],
+                count: 0,
+                metadata: {
+                    executionTime: 0,
+                    cached: true,
+                    affectedRows: 0
+                }
+            };
+        }
+        
+        const updatedData = { ...existingResult.data, ...updateData };
+        return this.insert(key, updatedData);
+    }
+    
+    async delete(key: string, where?: WhereClause): Promise<QueryResult<any>> {
+        this.ensureConnected();
+        
+        const startTime = Date.now();
+        const deletedCount = await this.del(key);
+        const duration = Date.now() - startTime;
+        
+        return {
+            data: [],
+            count: 0,
+            metadata: {
+                executionTime: duration,
+                cached: true,
+                affectedRows: deletedCount
+            }
+        };
+    }
+    
+    async count(pattern: string = '*'): Promise<number> {
+        const result = await this.findMany(pattern);
+        return result.count;
+    }
+    
+    async beginTransaction(): Promise<Transaction> {
+        this.ensureConnected();
+        
+        const transactionId = `redis_tx_${++this.transactionCounter}_${Date.now()}`;
+        const transaction = new MockRedisTransaction(transactionId, this);
+        
+        return transaction;
+    }
+    
+    async createTable(definition: ModelDefinition): Promise<void> {
+        // Redis doesn't have tables, so this is a no-op
+    }
+    
+    async dropTable(tableName: string): Promise<void> {
+        // Delete all keys matching the table pattern
+        const keys = Array.from(this.mockData.keys()).filter(key => key.startsWith(tableName + ':'));
+        for (const key of keys) {
+            this.mockData.delete(key);
+            this.mockExpiration.delete(key);
+        }
+    }
+    
+    async alterTable(tableName: string, changes: any): Promise<void> {
+        // Redis doesn't have schemas, so this is a no-op
+    }
+    
+    async createIndex(tableName: string, index: any): Promise<void> {
+        // Redis doesn't have explicit indexes
+    }
+    
+    async dropIndex(tableName: string, indexName: string): Promise<void> {
+        // Redis doesn't have explicit indexes
+    }
+    
+    async runMigration(migration: Migration): Promise<MigrationResult> {
+        const startTime = Date.now();
+        
+        try {
+            await migration.up(this);
+            const duration = Date.now() - startTime;
+            
+            return {
+                success: true,
+                migration,
+                executionTime: duration
+            };
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            
+            return {
+                success: false,
+                migration,
+                executionTime: duration,
+                error: error instanceof Error ? error : new Error(String(error))
+            };
+        }
+    }
+    
+    async getStats(): Promise<Record<string, any>> {
+        const totalKeys = this.mockData.size;
+        const expiredKeys = Array.from(this.mockExpiration.keys()).filter(key => this.isExpired(key)).length;
+        
+        return {
+            provider: this.name,
+            connected: this.connected,
+            totalKeys,
+            expiredKeys,
+            activeKeys: totalKeys - expiredKeys,
+            memoryUsage: this.estimateMemoryUsage(),
+            dbsize: totalKeys
+        };
+    }
+    
+    async clearCache(): Promise<void> {
+        this.mockData.clear();
+        this.mockExpiration.clear();
+    }
+    
+    // Private helper methods
+    private initializeMockData(): void {
+        // Initialize with some sample data
+        this.mockData.set('user:1', JSON.stringify({ id: 1, name: 'John Doe', email: 'john@example.com' }));
+        this.mockData.set('user:2', JSON.stringify({ id: 2, name: 'Jane Smith', email: 'jane@example.com' }));
+        this.mockData.set('counter:visits', '1250');
+        this.mockData.set('config:theme', 'dark');
+        
+        // Set data structure examples
+        const tags = new Set(['javascript', 'redis', 'database']);
+        this.mockData.set('tags:popular', tags);
+        
+        // List data structure examples
+        this.mockData.set('queue:tasks', ['task1', 'task2', 'task3']);
+        
+        // Hash data structure examples
+        this.mockData.set('session:abc123', {
+            userId: '1',
+            loginTime: new Date().toISOString(),
+            lastActivity: new Date().toISOString()
+        });
+    }
+    
+    private ensureConnected(): void {
+        if (!this.connected) {
+            throw new ConnectionError('Not connected to database', 'NOT_CONNECTED');
+        }
+    }
+    
+    private isExpired(key: string): boolean {
+        const expiration = this.mockExpiration.get(key);
+        if (!expiration) return false;
+        
+        return Date.now() > expiration;
+    }
+    
+    private cleanupExpiredKeys(): void {
+        for (const [key, expiration] of this.mockExpiration.entries()) {
+            if (Date.now() > expiration) {
+                this.mockData.delete(key);
+                this.mockExpiration.delete(key);
+            }
+        }
+    }
+    
+    private async executeRedisCommand(command: string, params?: any[]): Promise<any> {
+        const cmd = command.toLowerCase();
+        const [key, ...args] = params || [];
+        
+        switch (cmd) {
+            case 'get':
+                return this.get(key);
+            case 'set':
+                await this.set(key, args[0], args[1] ? { ttl: args[1] } : undefined);
+                return 'OK';
+            case 'del':
+                return this.del(key);
+            case 'exists':
+                return this.exists(key);
+            case 'ttl':
+                return this.ttl(key);
+            case 'incr':
+                return this.incr(key);
+            case 'decr':
+                return this.decr(key);
+            default:
+                return null;
+        }
+    }
+    
+    private estimateMemoryUsage(): string {
+        let totalSize = 0;
+        
+        for (const [key, value] of this.mockData.entries()) {
+            totalSize += key.length;
+            if (typeof value === 'string') {
+                totalSize += value.length;
+            } else {
+                totalSize += JSON.stringify(value).length;
+            }
+        }
+        
+        return `${Math.round(totalSize / 1024)}KB`;
+    }
+    
+    private sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+// Mock Redis Transaction implementation
+class MockRedisTransaction implements Transaction {
+    public readonly startTime = new Date();
+    public status: 'active' | 'committed' | 'rolled_back' = 'active';
+    private operations: Array<() => Promise<any>> = [];
+    
+    constructor(
+        public readonly id: string,
+        private provider: MockRedisProvider
+    ) {}
+    
+    async query<T = any>(command: string, params?: any[]): Promise<QueryResult<T>> {
+        if (this.status !== 'active') {
+            throw new QueryError('Transaction is not active', 'TRANSACTION_NOT_ACTIVE');
+        }
+        
+        // Queue operation for execution on commit
+        this.operations.push(() => this.provider.query<T>(command, params));
+        
+        return {
+            data: [] as T[],
+            count: 0,
+            metadata: {
+                executionTime: 0,
+                cached: true,
+                query: command,
+                parameters: params
+            }
+        };
+    }
+    
+    async findOne<T = any>(key: string, where?: WhereClause): Promise<SingleResult<T>> {
+        if (this.status !== 'active') {
+            throw new QueryError('Transaction is not active', 'TRANSACTION_NOT_ACTIVE');
+        }
+        return this.provider.findOne<T>(key, where);
+    }
+    
+    async findMany<T = any>(pattern: string, where?: WhereClause, options?: QueryOptions): Promise<QueryResult<T>> {
+        if (this.status !== 'active') {
+            throw new QueryError('Transaction is not active', 'TRANSACTION_NOT_ACTIVE');
+        }
+        return this.provider.findMany<T>(pattern, where, options);
+    }
+    
+    async insert<T = any>(key: string, data: Partial<T>): Promise<SingleResult<T>> {
+        if (this.status !== 'active') {
+            throw new QueryError('Transaction is not active', 'TRANSACTION_NOT_ACTIVE');
+        }
+        
+        // Queue operation for execution on commit
+        this.operations.push(() => this.provider.insert<T>(key, data));
+        
+        return {
+            data: data as T,
+            metadata: {
+                executionTime: 0,
+                cached: true,
+                found: true
+            }
+        };
+    }
+    
+    async update<T = any>(key: string, data: Partial<T>, where?: WhereClause): Promise<QueryResult<T>> {
+        if (this.status !== 'active') {
+            throw new QueryError('Transaction is not active', 'TRANSACTION_NOT_ACTIVE');
+        }
+        
+        // Queue operation for execution on commit
+        this.operations.push(() => this.provider.update<T>(key, data, where));
+        
+        return {
+            data: [data as T],
+            count: 1,
+            metadata: {
+                executionTime: 0,
+                cached: true,
+                affectedRows: 1
+            }
+        };
+    }
+    
+    async delete(key: string, where?: WhereClause): Promise<QueryResult<any>> {
+        if (this.status !== 'active') {
+            throw new QueryError('Transaction is not active', 'TRANSACTION_NOT_ACTIVE');
+        }
+        
+        // Queue operation for execution on commit
+        this.operations.push(() => this.provider.delete(key, where));
+        
+        return {
+            data: [],
+            count: 0,
+            metadata: {
+                executionTime: 0,
+                cached: true,
+                affectedRows: 1
+            }
+        };
+    }
+    
+    async commit(): Promise<void> {
+        if (this.status !== 'active') {
+            throw new QueryError('Transaction is not active', 'TRANSACTION_NOT_ACTIVE');
+        }
+        
+        // Execute all queued operations
+        for (const operation of this.operations) {
+            await operation();
+        }
+        
+        this.status = 'committed';
+    }
+    
+    async rollback(): Promise<void> {
+        if (this.status !== 'active') {
+            throw new QueryError('Transaction is not active', 'TRANSACTION_NOT_ACTIVE');
+        }
+        
+        // Clear all queued operations
+        this.operations = [];
+        this.status = 'rolled_back';
+    }
+}
