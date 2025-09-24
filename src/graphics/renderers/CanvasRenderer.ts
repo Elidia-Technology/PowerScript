@@ -74,8 +74,12 @@ export class CanvasRenderer implements IRenderer {
         // Configure canvas for high DPI displays
         this._canvas.width = this._width * this._pixelRatio;
         this._canvas.height = this._height * this._pixelRatio;
-        this._canvas.style.width = `${this._width}px`;
-        this._canvas.style.height = `${this._height}px`;
+        
+        // Set up high DPI display support (only in browser environment)
+        if (this._canvas.style) {
+            this._canvas.style.width = `${this._width}px`;
+            this._canvas.style.height = `${this._height}px`;
+        }
 
         // Scale context to match pixel ratio
         this._context.scale(this._pixelRatio, this._pixelRatio);
@@ -153,8 +157,12 @@ export class CanvasRenderer implements IRenderer {
         // Update canvas size
         this._canvas.width = width * this._pixelRatio;
         this._canvas.height = height * this._pixelRatio;
-        this._canvas.style.width = `${width}px`;
-        this._canvas.style.height = `${height}px`;
+        
+        // Update CSS size (only in browser environment)
+        if (this._canvas.style) {
+            this._canvas.style.width = `${width}px`;
+            this._canvas.style.height = `${height}px`;
+        }
 
         // Rescale context
         this._context.scale(this._pixelRatio, this._pixelRatio);

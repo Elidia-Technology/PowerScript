@@ -17,6 +17,7 @@ function createMockCanvas2DContext() {
         translate: () => {},
         rotate: () => {},
         scale: () => {},
+        transform: () => {},
         clip: () => {},
         beginPath: () => {},
         moveTo: () => {},
@@ -178,6 +179,11 @@ class MockDisplayObject {
     public scaleX = 1;
     public scaleY = 1;
     public rotation = 0;
+    public transform = {
+        matrix: {
+            a: 1, b: 0, c: 0, d: 1, tx: 100, ty: 100
+        }
+    };
     
     constructor() {}
 }
