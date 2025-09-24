@@ -88,11 +88,11 @@ export class JWTProvider implements AuthProvider {
                 user,
                 token,
                 refreshToken,
-                expiresIn: this.parseExpiresIn(this.config.jwt.expiresIn)
+                expiresIn: 3600
             };
 
         } catch (error) {
-            throw new AuthenticationError(`JWT authentication failed: ${error}`, 'AUTH_FAILED', 'authentication');
+            throw new AuthenticationError(`JWT authentication failed: ${error}`, 'AUTH_FAILED');
         }
     }
 
@@ -145,11 +145,11 @@ export class JWTProvider implements AuthProvider {
                 user,
                 token,
                 refreshToken: newRefreshToken,
-                expiresIn: this.config.tokenExpiry || 3600
+                expiresIn: 3600
             };
 
         } catch (error) {
-            throw new AuthenticationError(`Token refresh failed: ${error}`, 'REFRESH_FAILED', 'authentication');
+            throw new AuthenticationError(`Token refresh failed: ${error}`, 'REFRESH_FAILED');
         }
     }
 
@@ -159,7 +159,7 @@ export class JWTProvider implements AuthProvider {
             // For mock purposes, just log the action
             console.log(`Logout requested for token: ${token.substring(0, 20)}...`);
         } catch (error) {
-            throw new AuthenticationError(`Logout failed: ${error}`, 'LOGOUT_FAILED', 'authentication');
+            throw new AuthenticationError(`Logout failed: ${error}`, 'LOGOUT_FAILED');
         }
     }
 
@@ -169,7 +169,7 @@ export class JWTProvider implements AuthProvider {
             // Placeholder hashing - in real implementation use bcrypt, scrypt, etc.
             return 'hashed_' + Buffer.from(password).toString('base64');
         } catch (error) {
-            throw new AuthenticationError(`Password hashing failed: ${error}`, 'HASH_FAILED', 'authentication');
+            throw new AuthenticationError(`Password hashing failed: ${error}`, 'HASH_FAILED');
         }
     }
 
@@ -189,7 +189,7 @@ export class JWTProvider implements AuthProvider {
             // Placeholder MFA secret generation
             return `mfa_secret_${user.id}_${Math.random().toString(36).substr(2, 16)}`;
         } catch (error) {
-            throw new AuthenticationError(`MFA secret generation failed: ${error}`, 'MFA_FAILED', 'authentication');
+            throw new AuthenticationError(`MFA secret generation failed: ${error}`, 'MFA_FAILED');
         }
     }
 
@@ -209,7 +209,7 @@ export class JWTProvider implements AuthProvider {
             username: user.username,
             roles: user.roles,
             iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (this.config.tokenExpiry || 3600)
+            exp: Math.floor(Date.now() / 1000) + 3600
         };
 
         return `mock_jwt_${user.id}_${Buffer.from(JSON.stringify(payload)).toString('base64')}`;

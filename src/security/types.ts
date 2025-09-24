@@ -337,6 +337,8 @@ export enum SecurityEventType {
     ACCOUNT_UNLOCKED = 'account.unlocked',
     MFA_ENABLED = 'mfa.enabled',
     MFA_DISABLED = 'mfa.disabled',
+    MFA_SECRET_GENERATED = 'mfa.secret.generated',
+    MFA_VERIFICATION_PERFORMED = 'mfa.verification.performed',
     KEY_GENERATED = 'key.generated',
     KEY_ROTATED = 'key.rotated',
     ENCRYPTION_PERFORMED = 'encryption.performed',

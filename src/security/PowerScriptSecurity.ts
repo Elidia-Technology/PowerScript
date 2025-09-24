@@ -101,14 +101,14 @@ export class PowerScriptSecurity extends EventDispatcher {
             this.logger.info('Node.js crypto provider initialized');
 
             // Initialize JWT auth provider
-            const { JWTProvider } = await import('./auth/JWTProvider');
-            const jwtProvider = new JWTProvider(this.config.authentication.jwt);
+            const { JWTProvider } = await import('./authentication/JWTProvider');
+            const jwtProvider = new JWTProvider(this.config.authentication);
             this.authProviders.set('jwt', jwtProvider);
             this.logger.info('JWT authentication provider initialized');
 
             // Initialize RBAC authorization provider
-            const { RBACProvider } = await import('./auth/RBACProvider');
-            const rbacProvider = new RBACProvider(this.config.authorization.rbac);
+            const { RBACProvider } = await import('./authorization/RBACProvider');
+            const rbacProvider = new RBACProvider(this.config.authorization);
             this.authzProviders.set('rbac', rbacProvider);
             this.logger.info('RBAC authorization provider initialized');
 
@@ -354,6 +354,44 @@ export class PowerScriptSecurity extends EventDispatcher {
         }
     }
 
+    // Multi-Factor Authentication
+    public async generateMFASecret(user: User): Promise<string> {
+        try {
+            const provider = this.getAuthProvider('jwt');
+            const secret = await provider.generateMFASecret(user);
+            
+            this.auditEvent(SecurityEventType.MFA_SECRET_GENERATED, SecuritySeverity.MEDIUM, 'MFA secret generated', {
+                userId: user.id,
+                username: user.username
+            });
+            
+            return secret;
+        } catch (error) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            this.errorManager.handleError(err, 'MFA_SECRET_GENERATION_ERROR');
+            throw new AuthenticationError(`MFA secret generation failed: ${err.message}`);
+        }
+    }
+
+    public async verifyMFACode(user: User, code: string, secret: string): Promise<boolean> {
+        try {
+            const provider = this.getAuthProvider('jwt');
+            const isValid = await provider.verifyMFACode(user, code, secret);
+            
+            this.auditEvent(SecurityEventType.MFA_VERIFICATION_PERFORMED, SecuritySeverity.MEDIUM, 'MFA code verified', {
+                userId: user.id,
+                username: user.username,
+                success: isValid
+            });
+            
+            return isValid;
+        } catch (error) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            this.errorManager.handleError(err, 'MFA_VERIFICATION_ERROR');
+            return false;
+        }
+    }
+
     // Key Management
     public async generateKey(keyId?: string): Promise<Buffer> {
         try {
@@ -461,6 +499,16 @@ export class PowerScriptSecurity extends EventDispatcher {
     }
 
     // Audit and Monitoring
+    public async logSecurityEvent(eventType: string, message: string, severity: SecuritySeverity = SecuritySeverity.LOW, metadata: Record<string, any> = {}): Promise<void> {
+        try {
+            // Map string eventType to SecurityEventType enum
+            const mappedType = eventType as SecurityEventType || SecurityEventType.SECURITY_VIOLATION;
+            this.auditEvent(mappedType, severity, message, metadata);
+        } catch (error) {
+            this.logger.error('Failed to log security event:', error);
+        }
+    }
+
     private auditEvent(type: SecurityEventType, severity: SecuritySeverity, message: string, metadata: Record<string, any> = {}): void {
         const event: SecurityEvent = {
             id: this.generateEventId(),
