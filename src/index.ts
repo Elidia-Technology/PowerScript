@@ -18,11 +18,19 @@ export * from './ai';
 // ML Module
 export * from './ml';
 
+// Security Module
+export * from './security';
+
+// Networking Module  
+export * from './networking';
+
 // Global PowerScript namespace
 import { PowerScriptCore } from './core/PowerScriptCore';
 import { PowerScriptCompiler } from './compiler/PowerScriptCompiler';
 import { PowerScriptAI } from './ai/PowerScriptAI';
 import { PowerScriptML } from './ml/PowerScriptML';
+import { PowerScriptSecurity } from './security/PowerScriptSecurity';
+import { PowerScriptNetworking } from './networking/PowerScriptNetworking';
 
 /**
  * Main PowerScript class that provides unified access to all modules
