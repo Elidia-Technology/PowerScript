@@ -1,0 +1,56 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowJs": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@core/*": ["core/*"],
+      "@compiler/*": ["compiler/*"],
+      "@ai/*": ["ai/*"],
+      "@ml/*": ["ml/*"],
+      "@net/*": ["net/*"],
+      "@fs/*": ["fs/*"],
+      "@security/*": ["security/*"],
+      "@concurrency/*": ["concurrency/*"],
+      "@ui/*": ["ui/*"],
+      "@blockchain/*": ["blockchain/*"],
+      "@iot/*": ["iot/*"],
+      "@cloud/*": ["cloud/*"],
+      "@db/*": ["db/*"],
+      "@analytics/*": ["analytics/*"],
+      "@testing/*": ["testing/*"],
+      "@utils/*": ["utils/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "docs",
+    "examples",
+    "*.config.js"
+  ]
+}
