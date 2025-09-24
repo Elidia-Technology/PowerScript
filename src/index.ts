@@ -15,10 +15,14 @@ export * from './compiler';
 // AI Module
 export * from './ai';
 
+// ML Module
+export * from './ml';
+
 // Global PowerScript namespace
 import { PowerScriptCore } from './core/PowerScriptCore';
 import { PowerScriptCompiler } from './compiler/PowerScriptCompiler';
 import { PowerScriptAI } from './ai/PowerScriptAI';
+import { PowerScriptML } from './ml/PowerScriptML';
 
 /**
  * Main PowerScript class that provides unified access to all modules
@@ -28,6 +32,7 @@ export class PowerScript {
   private _core: PowerScriptCore;
   private _compiler?: PowerScriptCompiler;
   private _ai?: PowerScriptAI;
+  private _ml?: PowerScriptML;
 
   private constructor() {
     this._core = new PowerScriptCore();

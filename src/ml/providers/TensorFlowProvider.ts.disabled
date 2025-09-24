@@ -1,0 +1,487 @@
+/**
+ * TensorFlow.js Provider for PowerScript ML
+ * Comprehensive TensorFlow.js integration with GPU acceleration
+ */
+
+// import * as tf from '@tensorflow/tfjs-node'; // Commented out until dependency is installed
+const tf: any = null; // Placeholder
+import { 
+    MLProvider, 
+    MLModel, 
+    MLTensor, 
+    MLPredictionResult, 
+    MLBatchPredictionResult,
+    MLLoadOptions,
+    MLQuantizationOptions,
+    MLOptimizationOptions,
+    MLMemoryInfo,
+    TensorFlowConfig,
+    MLError,
+    MLModelNotFoundError,
+    MLInferenceError,
+    MLOutOfMemoryError
+} from '../types';
+
+export class TensorFlowProvider implements MLProvider {
+    public readonly name = 'tensorflow';
+    public readonly version: string;
+    
+    private models: Map<string, tf.GraphModel | tf.LayersModel> = new Map();
+    private config: TensorFlowConfig;
+    private initialized = false;
+
+    constructor(config: TensorFlowConfig) {
+        this.config = config;
+        this.version = tf.version.tfjs;
+    }
+
+    public async initialize(): Promise<void> {
+        if (this.initialized) return;
+
+        try {
+            // Set TensorFlow backend
+            await this.setupBackend();
+            
+            // Configure debug mode
+            if (this.config.debug) {
+                tf.env().set('DEBUG', true);
+            }
+
+            // Register custom kernels if provided
+            if (this.config.kernelRegistry) {
+                await this.registerKernels(this.config.kernelRegistry);
+            }
+
+            this.initialized = true;
+        } catch (error) {
+            throw new MLError(`Failed to initialize TensorFlow provider: ${error}`, 'TF_INIT_ERROR', 'tensorflow');
+        }
+    }
+
+    private async setupBackend(): Promise<void> {
+        const { backend } = this.config;
+        
+        switch (backend) {
+            case 'cpu':
+                await tf.setBackend('cpu');
+                break;
+            case 'webgl':
+                await tf.setBackend('webgl');
+                break;
+            case 'wasm':
+                await tf.setBackend('wasm');
+                break;
+            default:
+                // Let TensorFlow choose the best backend
+                break;
+        }
+
+        await tf.ready();
+    }
+
+    private async registerKernels(kernelRegistry: string[]): Promise<void> {
+        // Custom kernel registration logic would go here
+        // This is a placeholder for advanced use cases
+        for (const kernel of kernelRegistry) {
+            console.log(`Registering kernel: ${kernel}`);
+        }
+    }
+
+    // Model Management
+    public async loadModel(modelPath: string, options?: MLLoadOptions): Promise<MLModel> {
+        try {
+            if (!this.initialized) {
+                await this.initialize();
+            }
+
+            const loadOptions: tf.io.LoadOptions = {};
+            
+            if (options?.useGPU) {
+                // GPU-specific loading options
+                loadOptions.requestInitialization = options.warmup;
+            }
+
+            // Load model based on format detection
+            let model: tf.GraphModel | tf.LayersModel;
+            
+            if (modelPath.includes('model.json') || modelPath.includes('.json')) {
+                // LayersModel format
+                model = await tf.loadLayersModel(modelPath, loadOptions);
+            } else {
+                // GraphModel format (for inference)
+                model = await tf.loadGraphModel(modelPath, loadOptions);
+            }
+
+            // Generate model ID
+            const modelId = this.generateModelId(modelPath);
+            
+            // Store model
+            this.models.set(modelId, model);
+
+            // Extract model metadata
+            const inputShape = this.extractInputShape(model);
+            const outputShape = this.extractOutputShape(model);
+
+            // Warmup if requested
+            if (options?.warmup) {
+                await this.warmupModel(model, inputShape);
+            }
+
+            const mlModel: MLModel = {
+                id: modelId,
+                name: modelPath.split('/').pop() || 'unknown',
+                version: '1.0.0',
+                type: 'tensorflow',
+                format: model instanceof tf.LayersModel ? 'savedmodel' : 'graphdef',
+                inputShape,
+                outputShape,
+                metadata: {
+                    backend: tf.getBackend(),
+                    memory: tf.memory(),
+                    modelSize: this.calculateModelSize(model)
+                }
+            };
+
+            return mlModel;
+        } catch (error) {
+            throw new MLError(`Failed to load TensorFlow model: ${error}`, 'TF_LOAD_ERROR', 'tensorflow');
+        }
+    }
+
+    public async unloadModel(modelId: string): Promise<void> {
+        const model = this.models.get(modelId);
+        if (!model) {
+            throw new MLModelNotFoundError(modelId, 'tensorflow');
+        }
+
+        try {
+            model.dispose();
+            this.models.delete(modelId);
+        } catch (error) {
+            throw new MLError(`Failed to unload TensorFlow model: ${error}`, 'TF_UNLOAD_ERROR', 'tensorflow', modelId);
+        }
+    }
+
+    public async listModels(): Promise<MLModel[]> {
+        const models: MLModel[] = [];
+        
+        for (const [modelId, model] of this.models) {
+            const inputShape = this.extractInputShape(model);
+            const outputShape = this.extractOutputShape(model);
+            
+            models.push({
+                id: modelId,
+                name: modelId,
+                version: '1.0.0',
+                type: 'tensorflow',
+                format: model instanceof tf.LayersModel ? 'savedmodel' : 'graphdef',
+                inputShape,
+                outputShape,
+                metadata: {
+                    backend: tf.getBackend(),
+                    modelSize: this.calculateModelSize(model)
+                }
+            });
+        }
+
+        return models;
+    }
+
+    // Inference
+    public async predict(modelId: string, inputs: MLTensor[]): Promise<MLPredictionResult> {
+        const startTime = Date.now();
+        
+        try {
+            const model = this.models.get(modelId);
+            if (!model) {
+                throw new MLModelNotFoundError(modelId, 'tensorflow');
+            }
+
+            // Convert ML tensors to TensorFlow tensors
+            const tfInputs = this.convertToTFTensors(inputs);
+            
+            // Run prediction
+            let predictions: tf.Tensor | tf.Tensor[];
+            
+            if (model instanceof tf.LayersModel) {
+                predictions = model.predict(tfInputs) as tf.Tensor | tf.Tensor[];
+            } else {
+                predictions = model.predict(tfInputs) as tf.Tensor | tf.Tensor[];
+            }
+
+            // Convert results back to ML tensors
+            const resultTensors = await this.convertFromTFTensors(predictions);
+            
+            // Calculate confidence if possible
+            const confidence = this.calculateConfidence(resultTensors);
+
+            // Cleanup TensorFlow tensors
+            this.disposeTensors(tfInputs);
+            this.disposeTensors(predictions);
+
+            const processingTime = Date.now() - startTime;
+
+            return {
+                predictions: resultTensors,
+                confidence,
+                processingTime,
+                modelId,
+                metadata: {
+                    backend: tf.getBackend(),
+                    memoryUsage: tf.memory().numBytes
+                }
+            };
+        } catch (error) {
+            throw new MLInferenceError(`TensorFlow prediction failed: ${error}`, modelId, 'tensorflow');
+        }
+    }
+
+    public async predictBatch(modelId: string, inputs: MLTensor[][]): Promise<MLBatchPredictionResult> {
+        const startTime = Date.now();
+        const results: MLPredictionResult[] = [];
+        
+        try {
+            // Process batch sequentially (could be optimized for true batch processing)
+            for (const inputBatch of inputs) {
+                const result = await this.predict(modelId, inputBatch);
+                results.push(result);
+            }
+
+            const totalProcessingTime = Date.now() - startTime;
+            const avgConfidence = results.reduce((sum, r) => sum + (r.confidence || 0), 0) / results.length;
+
+            return {
+                results,
+                batchSize: inputs.length,
+                totalProcessingTime,
+                avgConfidence
+            };
+        } catch (error) {
+            throw new MLInferenceError(`TensorFlow batch prediction failed: ${error}`, modelId, 'tensorflow');
+        }
+    }
+
+    // Model Operations
+    public async quantizeModel(modelId: string, options: MLQuantizationOptions): Promise<MLModel> {
+        const model = this.models.get(modelId);
+        if (!model) {
+            throw new MLModelNotFoundError(modelId, 'tensorflow');
+        }
+
+        try {
+            // TensorFlow.js quantization is limited, this is a placeholder
+            // Real implementation would use tf.quantization APIs
+            console.warn('TensorFlow.js quantization not fully implemented yet');
+            
+            // Return original model for now
+            return this.createModelFromTF(modelId, model);
+        } catch (error) {
+            throw new MLError(`TensorFlow quantization failed: ${error}`, 'TF_QUANTIZE_ERROR', 'tensorflow', modelId);
+        }
+    }
+
+    public async optimizeModel(modelId: string, options: MLOptimizationOptions): Promise<MLModel> {
+        const model = this.models.get(modelId);
+        if (!model) {
+            throw new MLModelNotFoundError(modelId, 'tensorflow');
+        }
+
+        try {
+            // TensorFlow.js optimization is limited, this is a placeholder
+            console.warn('TensorFlow.js model optimization not fully implemented yet');
+            
+            // Return original model for now
+            return this.createModelFromTF(modelId, model);
+        } catch (error) {
+            throw new MLError(`TensorFlow optimization failed: ${error}`, 'TF_OPTIMIZE_ERROR', 'tensorflow', modelId);
+        }
+    }
+
+    // Resource Management
+    public async getMemoryUsage(): Promise<MLMemoryInfo> {
+        const memory = tf.memory();
+        const modelMemory: Record<string, number> = {};
+        
+        // Estimate memory per model (approximation)
+        const totalModels = this.models.size;
+        const memoryPerModel = totalModels > 0 ? memory.numBytes / totalModels : 0;
+        
+        for (const modelId of this.models.keys()) {
+            modelMemory[modelId] = memoryPerModel;
+        }
+
+        return {
+            totalMemory: memory.numBytes + memory.numBytesInGPU,
+            usedMemory: memory.numBytes,
+            modelMemory,
+            availableMemory: Math.max(0, memory.numBytes - memory.numBytesInGPU)
+        };
+    }
+
+    public async cleanup(): Promise<void> {
+        try {
+            // Dispose all models
+            for (const [modelId, model] of this.models) {
+                model.dispose();
+            }
+            this.models.clear();
+
+            // Clean up TensorFlow resources
+            tf.disposeVariables();
+            
+            this.initialized = false;
+        } catch (error) {
+            throw new MLError(`TensorFlow cleanup failed: ${error}`, 'TF_CLEANUP_ERROR', 'tensorflow');
+        }
+    }
+
+    // Utility Methods
+    private generateModelId(modelPath: string): string {
+        return `tf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    private extractInputShape(model: tf.GraphModel | tf.LayersModel): number[] {
+        try {
+            if (model instanceof tf.LayersModel) {
+                const inputShape = model.inputs[0].shape;
+                return inputShape || [1];
+            } else {
+                // For GraphModel, we need to inspect inputs
+                const inputSpecs = model.inputSpecs;
+                if (inputSpecs && inputSpecs.length > 0) {
+                    return inputSpecs[0].shape || [1];
+                }
+            }
+        } catch (error) {
+            console.warn('Could not extract input shape:', error);
+        }
+        return [1]; // Default shape
+    }
+
+    private extractOutputShape(model: tf.GraphModel | tf.LayersModel): number[] {
+        try {
+            if (model instanceof tf.LayersModel) {
+                const outputShape = model.outputs[0].shape;
+                return outputShape || [1];
+            } else {
+                // For GraphModel, we need to inspect outputs
+                const outputSpecs = model.outputSpecs;
+                if (outputSpecs && outputSpecs.length > 0) {
+                    return outputSpecs[0].shape || [1];
+                }
+            }
+        } catch (error) {
+            console.warn('Could not extract output shape:', error);
+        }
+        return [1]; // Default shape
+    }
+
+    private calculateModelSize(model: tf.GraphModel | tf.LayersModel): number {
+        try {
+            // Estimate model size based on parameters
+            let totalParams = 0;
+            
+            if (model instanceof tf.LayersModel) {
+                totalParams = model.countParams();
+            } else {
+                // For GraphModel, estimate based on weights
+                const weights = model.getWeights();
+                totalParams = weights.reduce((sum, weight) => sum + weight.size, 0);
+            }
+            
+            return totalParams * 4; // Assume float32 (4 bytes per parameter)
+        } catch (error) {
+            return 0;
+        }
+    }
+
+    private async warmupModel(model: tf.GraphModel | tf.LayersModel, inputShape: number[]): Promise<void> {
+        try {
+            const dummyInput = tf.zeros(inputShape);
+            
+            if (model instanceof tf.LayersModel) {
+                const result = model.predict(dummyInput);
+                if (Array.isArray(result)) {
+                    result.forEach(t => t.dispose());
+                } else {
+                    result.dispose();
+                }
+            } else {
+                const result = model.predict(dummyInput);
+                if (Array.isArray(result)) {
+                    result.forEach(t => t.dispose());
+                } else {
+                    result.dispose();
+                }
+            }
+            
+            dummyInput.dispose();
+        } catch (error) {
+            console.warn('Model warmup failed:', error);
+        }
+    }
+
+    private convertToTFTensors(tensors: MLTensor[]): tf.Tensor[] {
+        return tensors.map(tensor => {
+            const tfTensor = tf.tensor(tensor.data, tensor.shape, tensor.dtype as any);
+            return tfTensor;
+        });
+    }
+
+    private async convertFromTFTensors(tensors: tf.Tensor | tf.Tensor[]): Promise<MLTensor[]> {
+        const tensorArray = Array.isArray(tensors) ? tensors : [tensors];
+        const results: MLTensor[] = [];
+        
+        for (const tensor of tensorArray) {
+            const data = await tensor.data();
+            results.push({
+                data: new Float32Array(data),
+                shape: tensor.shape,
+                dtype: tensor.dtype as any
+            });
+        }
+        
+        return results;
+    }
+
+    private calculateConfidence(tensors: MLTensor[]): number | undefined {
+        try {
+            // Simple confidence calculation for classification tasks
+            if (tensors.length > 0) {
+                const firstTensor = tensors[0];
+                if (firstTensor.data.length > 1) {
+                    // Find max probability for classification
+                    const maxValue = Math.max(...Array.from(firstTensor.data));
+                    return maxValue;
+                }
+            }
+        } catch (error) {
+            // Ignore confidence calculation errors
+        }
+        return undefined;
+    }
+
+    private disposeTensors(tensors: tf.Tensor | tf.Tensor[]): void {
+        if (Array.isArray(tensors)) {
+            tensors.forEach(tensor => tensor.dispose());
+        } else {
+            tensors.dispose();
+        }
+    }
+
+    private createModelFromTF(modelId: string, model: tf.GraphModel | tf.LayersModel): MLModel {
+        return {
+            id: modelId,
+            name: modelId,
+            version: '1.0.0',
+            type: 'tensorflow',
+            format: model instanceof tf.LayersModel ? 'savedmodel' : 'graphdef',
+            inputShape: this.extractInputShape(model),
+            outputShape: this.extractOutputShape(model),
+            metadata: {
+                backend: tf.getBackend(),
+                modelSize: this.calculateModelSize(model)
+            }
+        };
+    }
+}
