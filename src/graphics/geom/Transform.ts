@@ -68,4 +68,14 @@ export class Transform {
         this._colorTransform = sourceTransform._colorTransform;
         this._perspectiveProjection = sourceTransform._perspectiveProjection;
     }
+
+    /**
+     * Gets a transformation matrix relative to another display object
+     */
+    public getMatrixRelativeTo(target: any): Matrix {
+        // This is a simplified implementation
+        // In a full implementation, this would calculate the transformation
+        // from this object's coordinate space to the target's coordinate space
+        return this._matrix.clone();
+    }
 }

@@ -202,6 +202,26 @@ export class Sprite extends DisplayObjectContainer {
     }
 
     /**
+     * Calculates the bounds of this sprite including graphics and children
+     */
+    protected calculateBounds(): Rectangle {
+        // Start with graphics bounds
+        let bounds = this._graphics.getBounds();
+        
+        // Include children bounds by calling parent's calculateBounds
+        const childBounds = super.calculateBounds();
+        if (childBounds.width > 0 || childBounds.height > 0) {
+            if (bounds.width === 0 && bounds.height === 0) {
+                bounds = childBounds;
+            } else {
+                bounds = bounds.union(childBounds);
+            }
+        }
+
+        return bounds;
+    }
+
+    /**
      * Disposes of this sprite and its resources
      */
     public dispose(): void {
@@ -209,7 +229,7 @@ export class Sprite extends DisplayObjectContainer {
         this._graphics.dispose();
         
         // Remove all children
-        this.removeAllChildren();
+        this.removeChildren();
         
         // Remove from parent
         if (this.parent) {

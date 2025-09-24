@@ -5,42 +5,43 @@
  * Supports Canvas 2D and WebGL rendering with a familiar ActionScript 3 display hierarchy.
  */
 
-// Core display objects and interfaces
-export * from './display/DisplayObject';
-export * from './display/DisplayObjectContainer';
-export * from './display/Sprite';
-export * from './display/MovieClip';
-export * from './display/Stage';
-export * from './display/Bitmap';
-export * from './display/Shape';
+// Core display objects (implemented)
+export { DisplayObject } from './display/DisplayObject';
+export { DisplayObjectContainer } from './display/DisplayObjectContainer';
+export { Sprite } from './display/Sprite';
+export { Shape } from './display/Shape';
+export { Stage } from './display/Stage';
 
-// Graphics and drawing
-export * from './graphics/Graphics';
-export * from './graphics/GraphicsRenderer';
-export * from './graphics/BitmapData';
-export * from './graphics/Texture';
+// Graphics and drawing (implemented)
+export { Graphics } from './Graphics';
+export type { IFill, IStroke, IDrawCommand } from './Graphics';
+
+// Geometry classes (implemented)
+export { Point } from './geom/Point';
+export { Rectangle } from './geom/Rectangle';
+export { Matrix } from './geom/Matrix';
+export { Transform } from './geom/Transform';
+
+// TODO: Future implementations
+// Core display objects
+// export { MovieClip } from './display/MovieClip';
+// export { Bitmap } from './display/Bitmap';
 
 // Animation and tweening
-export * from './animation/Tween';
-export * from './animation/Timeline';
-export * from './animation/Easing';
+// export { Tween } from './animation/Tween';
+// export { Timeline } from './animation/Timeline';
+// export { Easing } from './animation/Easing';
 
 // Event handling
-export * from './events/DisplayEvent';
-export * from './events/MouseEvent';
-export * from './events/KeyboardEvent';
-export * from './events/TouchEvent';
+// export { DisplayEvent } from './events/DisplayEvent';
+// export { MouseEvent } from './events/MouseEvent';
+// export { KeyboardEvent } from './events/KeyboardEvent';
+// export { TouchEvent } from './events/TouchEvent';
 
 // Rendering backends
-export * from './renderers/CanvasRenderer';
-export * from './renderers/WebGLRenderer';
-export * from './renderers/RenderTarget';
+// export { CanvasRenderer } from './renderers/CanvasRenderer';
+// export { WebGLRenderer } from './renderers/WebGLRenderer';
+// export { RenderTarget } from './renderers/RenderTarget';
 
-// Math and geometry
-export * from './geom/Point';
-export * from './geom/Rectangle';
-export * from './geom/Matrix';
-export * from './geom/Transform';
-
-// Main graphics system
-export * from './PowerScriptGraphics';
+// Additional geometry
+// export { ColorTransform } from './geom/ColorTransform';

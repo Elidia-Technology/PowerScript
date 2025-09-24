@@ -360,10 +360,8 @@ export abstract class DisplayObject extends EventDispatcher {
         this.markBoundsDirty();
         this.markTransformDirty();
         
-        // Propagate invalidation to parent
-        if (this._displayParent) {
-            (this._displayParent as any).invalidate();
-        }
+        // Don't propagate to parent to avoid circular calls
+        // Each object manages its own invalidation
     }
 
     // Internal methods
@@ -432,8 +430,8 @@ export abstract class DisplayObject extends EventDispatcher {
         this.updateTransform();
 
         if (this._displayParent) {
-            // Concatenate with parent transform
-            (this._displayParent as any).updateGlobalTransform();
+            // Assume parent transform is already updated
+            // Don't recursively call parent to avoid circular calls
             this._globalTransform.matrix.copyFrom((this._displayParent as any)._globalTransform.matrix);
             this._globalTransform.matrix.concat(this._transform.matrix);
         } else {

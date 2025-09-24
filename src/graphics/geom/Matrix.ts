@@ -6,6 +6,7 @@
  */
 
 import { Point } from './Point';
+import { Rectangle } from './Rectangle';
 
 export class Matrix {
     public a: number; // Scale X
@@ -294,6 +295,26 @@ export class Matrix {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
         return new Matrix(cos, sin, -sin, cos, 0, 0);
+    }
+
+    /**
+     * Transform a rectangle by this matrix
+     */
+    public transformRectangle(rect: Rectangle): Rectangle {
+        // Transform all four corners of the rectangle
+        const topLeft = this.transformPoint(new Point(rect.x, rect.y));
+        const topRight = this.transformPoint(new Point(rect.x + rect.width, rect.y));
+        const bottomLeft = this.transformPoint(new Point(rect.x, rect.y + rect.height));
+        const bottomRight = this.transformPoint(new Point(rect.x + rect.width, rect.y + rect.height));
+        
+        // Find bounding box of transformed corners
+        const minX = Math.min(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
+        const minY = Math.min(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
+        const maxX = Math.max(topLeft.x, topRight.x, bottomLeft.x, bottomRight.x);
+        const maxY = Math.max(topLeft.y, topRight.y, bottomLeft.y, bottomRight.y);
+        
+        // Return new Rectangle instance with transformed bounds
+        return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
     /**
