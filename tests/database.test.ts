@@ -475,14 +475,8 @@ class DatabaseTestRunner {
 // Export for use in main test runner
 export { DatabaseTestRunner };
 
-// Run tests if this file is executed directly
-if (require.main === module) {
+// Main execution function
+export async function runDatabaseTests(): Promise<void> {
     const runner = new DatabaseTestRunner();
-    runner.run().then(() => {
-        const failed = runner.testResults.filter(r => !r.passed).length;
-        process.exit(failed > 0 ? 1 : 0);
-    }).catch(error => {
-        console.error('Test runner failed:', error);
-        process.exit(1);
-    });
+    await runner.run();
 }

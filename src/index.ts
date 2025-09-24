@@ -10,19 +10,22 @@
 export * from './core';
 
 // Compiler Module
-export * from './compiler';
+export { PowerScriptCompiler } from './compiler';
 
 // AI Module
-export * from './ai';
+export { PowerScriptAI } from './ai';
 
 // ML Module
-export * from './ml';
+export { PowerScriptML } from './ml';
 
 // Security Module
-export * from './security';
+export { PowerScriptSecurity } from './security';
 
 // Networking Module  
-export * from './networking';
+export { PowerScriptNetworking } from './networking';
+
+// Database Module
+export { PowerScriptDatabase, createDatabaseProvider } from './database';
 
 // Global PowerScript namespace
 import { PowerScriptCore } from './core/PowerScriptCore';
@@ -31,6 +34,7 @@ import { PowerScriptAI } from './ai/PowerScriptAI';
 import { PowerScriptML } from './ml/PowerScriptML';
 import { PowerScriptSecurity } from './security/PowerScriptSecurity';
 import { PowerScriptNetworking } from './networking/PowerScriptNetworking';
+import { PowerScriptDatabase } from './database/PowerScriptDatabase';
 
 /**
  * Main PowerScript class that provides unified access to all modules
@@ -41,6 +45,7 @@ export class PowerScript {
   private _compiler?: PowerScriptCompiler;
   private _ai?: PowerScriptAI;
   private _ml?: PowerScriptML;
+  private _database?: PowerScriptDatabase;
 
   private constructor() {
     this._core = new PowerScriptCore();
@@ -92,6 +97,17 @@ export class PowerScript {
       instance._ai = new PowerScriptAI();
     }
     return instance._ai;
+  }
+
+  /**
+   * Get the database instance
+   */
+  public static get database(): PowerScriptDatabase {
+    const instance = PowerScript.getInstance();
+    if (!instance._database) {
+      instance._database = PowerScriptDatabase.getInstance();
+    }
+    return instance._database;
   }
 
   /**
