@@ -11,6 +11,11 @@ export * from './Timer';
 export * from './Vector';
 export * from './ByteArray';
 
+// Enhanced AS3 Utilities (selective exports to avoid conflicts)
+export { PSMath, PSArray, PSVector, PSByteArray } from './AS3Utilities';
+export { AS3Compiler } from './AS3Compiler';
+export * from './DynamicClass';
+
 // Infrastructure
 export * from './Logger';
 export * from './ErrorManager';
