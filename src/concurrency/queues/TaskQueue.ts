@@ -20,7 +20,7 @@ import {
   ErrorCallback,
   ConcurrencyEvent,
   EventType
-} from '../types.js';
+} from '../types';
 
 export class TaskQueue extends EventEmitter implements ITaskQueue {
   public readonly id: string;

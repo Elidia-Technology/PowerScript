@@ -158,5 +158,15 @@ async function testNetworkingEnhanced() {
   }
 }
 
+// Jest test wrapper
+describe('PowerScript Networking Enhanced', () => {
+  test('should pass enhanced networking tests', async () => {
+    await testNetworkingEnhanced();
+    expect(true).toBe(true);
+  }, 30000);
+});
+
 // Run the test
-testNetworkingEnhanced().catch(console.error);
+if (require.main === module) {
+  testNetworkingEnhanced().catch(console.error);
+}

@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from 'events';
-import { TaskQueue } from './queues/TaskQueue.js';
-import { WorkerPool } from './workers/WorkerPool.js';
-import { TaskScheduler } from './scheduling/TaskScheduler.js';
+import { TaskQueue } from './queues/TaskQueue';
+import { WorkerPool } from './workers/WorkerPool';
+import { TaskScheduler } from './scheduling/TaskScheduler';
 import {
   ConcurrencyConfig,
   QueueType,
@@ -24,7 +24,7 @@ import {
   ConcurrencyEvent,
   ConcurrencyError,
   EventType
-} from './types.js';
+} from './types';
 
 export class PowerScriptConcurrency extends EventEmitter {
   private config: Required<ConcurrencyConfig>;
@@ -390,7 +390,7 @@ export class PowerScriptConcurrency extends EventEmitter {
     maxAttempts: number = this.config.retryAttempts,
     delay: number = this.config.retryDelay
   ): Promise<T> {
-    let lastError: Error;
+    let lastError: Error = new Error('Unknown error');
     
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {

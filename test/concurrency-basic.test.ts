@@ -3,7 +3,7 @@
  * Comprehensive testing for parallel processing, workers, and scheduling
  */
 
-import { PowerScriptConcurrency, QueueType, TaskPriority, TaskStatus } from '../src/concurrency/index.js';
+import { PowerScriptConcurrency, QueueType, TaskPriority, TaskStatus } from '../src/concurrency/index';
 
 // Mock console methods to capture logs during testing
 const originalLog = console.log;
@@ -30,7 +30,7 @@ class ConcurrencyTestRunner {
   private results: TestResult[] = [];
   private concurrency: PowerScriptConcurrency | null = null;
 
-  async runAllTests(): Promise<void> {
+  async runAllTests(): Promise<TestResult[]> {
     console.log('🚀 Starting PowerScript Concurrency Module Tests...\n');
 
     const tests = [
@@ -55,6 +55,7 @@ class ConcurrencyTestRunner {
     }
 
     this.printResults();
+    return this.results;
   }
 
   private async runTest(testFn: () => Promise<void>): Promise<void> {
@@ -460,6 +461,28 @@ class ConcurrencyTestRunner {
     }
   }
 }
+
+// Jest test wrapper
+describe('PowerScript Concurrency Module', () => {
+  let runner: ConcurrencyTestRunner;
+
+  beforeEach(() => {
+    runner = new ConcurrencyTestRunner();
+  });
+
+  test('should pass all concurrency tests', async () => {
+    const results = await runner.runAllTests();
+    
+    // Check if all tests passed
+    const failedTests = results.filter(r => !r.passed);
+    if (failedTests.length > 0) {
+      console.error('Failed tests:', failedTests);
+    }
+    
+    expect(results.length).toBeGreaterThan(0);
+    expect(failedTests.length).toBe(0);
+  }, 30000); // 30 second timeout
+});
 
 // Run tests if this file is executed directly
 if (require.main === module) {

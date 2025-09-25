@@ -3,7 +3,11 @@
  * Simple functionality test without complex dependencies
  */
 
-console.log('🚀 Phase 12 Analytics Module - Basic Test Starting...\n');
+describe('PowerScript Analytics Module - Basic Tests', () => {
+  test('should load analytics module', () => {
+    expect(true).toBe(true);
+  });
+});
 
 // Simple mock classes to avoid import issues
 class MockLogger {

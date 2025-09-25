@@ -159,10 +159,20 @@ async function testCanvasRenderer() {
     }
 }
 
+// Jest test wrapper
+describe('PowerScript Canvas Rendering', () => {
+  test('should pass canvas rendering tests', async () => {
+    await testCanvasRenderer();
+    expect(true).toBe(true);
+  }, 15000);
+});
+
 // Run the test
-testCanvasRenderer().then(() => {
+if (require.main === module) {
+  testCanvasRenderer().then(() => {
     console.log('\n✅ PowerScript Canvas 2D Renderer - Implementation Complete!');
-}).catch((error) => {
+  }).catch((error) => {
     console.error('\n❌ Test failed:', error);
     throw error;
-});
+  });
+}

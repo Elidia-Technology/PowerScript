@@ -4,16 +4,16 @@
  */
 
 // Main orchestrator
-export { PowerScriptConcurrency } from './PowerScriptConcurrency.js';
-import { PowerScriptConcurrency } from './PowerScriptConcurrency.js';
+export { PowerScriptConcurrency } from './PowerScriptConcurrency';
+import { PowerScriptConcurrency } from './PowerScriptConcurrency';
 
 // Core components
-export { TaskQueue } from './queues/TaskQueue.js';
-export { WorkerPool } from './workers/WorkerPool.js';
-export { TaskScheduler } from './scheduling/TaskScheduler.js';
+export { TaskQueue } from './queues/TaskQueue';
+export { WorkerPool } from './workers/WorkerPool';
+export { TaskScheduler } from './scheduling/TaskScheduler';
 
 // Type definitions
-export * from './types.js';
+export * from './types';
 
 // Re-export for convenience
 export {
@@ -27,7 +27,7 @@ export {
   StepType,
   EventType,
   MessageQueueType
-} from './types.js';
+} from './types';
 
 // Error classes
 export {
@@ -37,7 +37,7 @@ export {
   QueueError,
   SchedulerError,
   WorkflowError
-} from './types.js';
+} from './types';
 
 // Default export
 export default PowerScriptConcurrency;

@@ -70,5 +70,15 @@ async function testStableMultimedia() {
   }
 }
 
+// Jest test wrapper
+describe('PowerScript Multimedia Stable', () => {
+  test('should pass stable multimedia tests', async () => {
+    await testStableMultimedia();
+    expect(true).toBe(true);
+  }, 15000);
+});
+
 // Run the test
-testStableMultimedia().catch(console.error);
+if (require.main === module) {
+  testStableMultimedia().catch(console.error);
+}

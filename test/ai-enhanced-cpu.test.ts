@@ -34,7 +34,7 @@ const testConfig: AIEnhancedConfig = {
 async function runEnhancedAITests(): Promise<void> {
   console.log('🚀 Starting Enhanced AI/ML Module Tests...\n');
 
-  let aiEnhanced: PowerScriptAIEnhanced;
+  let aiEnhanced: PowerScriptAIEnhanced | undefined;
   
   try {
     console.log('📋 Test 1: Initialization and Hardware Detection');
@@ -88,8 +88,8 @@ async function runEnhancedAITests(): Promise<void> {
 
     const textResponse = await aiEnhanced.generateText(textRequest);
     console.log(`✅ Text generated: ${textResponse.text.length} characters`);
-    console.log(`   Model: ${textResponse.metadata.model} on ${textResponse.metadata.device}`);
-    console.log(`   Processing time: ${textResponse.metadata.timeMs}ms`);
+    console.log(`   Model: ${textResponse.metadata?.model || 'unknown'} on ${textResponse.metadata?.device || 'cpu'}`);
+    console.log(`   Processing time: ${textResponse.metadata?.timeMs || 0}ms`);
 
     // Test 5: Text summarization (CPU-friendly)
     console.log('\n📋 Test 5: Text Summarization');
@@ -178,21 +178,21 @@ async function runEnhancedAITests(): Promise<void> {
 
     // Test 11: Performance monitoring
     console.log('\n📋 Test 11: Performance Monitoring');
-    const systemInfo = await aiEnhanced.getSystemInfo();
+    const systemInfo2 = await aiEnhanced.getSystemInfo();
     console.log('✅ System information:');
-    console.log(`   CPU: ${systemInfo.cpu || 'detected'}`);
-    console.log(`   Memory: ${systemInfo.memory || 'available'}`);
-    console.log(`   GPU: ${systemInfo.gpu || 'none detected (CPU mode)'}`);
+    console.log(`   CPU: ${systemInfo2.hardware?.length || 'detected'}`);
+    console.log(`   Memory: ${systemInfo2.cache?.totalEntries || 'available'}`);
+    console.log(`   GPU: none detected (CPU mode)`);
 
     const cacheStats = aiEnhanced.getCacheStats();
-    console.log(`✅ Cache stats: ${cacheStats.modelsLoaded || 0} models loaded`);
+    console.log(`✅ Cache stats: ${cacheStats.totalEntries || 0} models loaded`);
 
     const tasks = aiEnhanced.getTasks();
     console.log(`✅ Task monitoring: ${tasks.length} tasks tracked`);
 
     // Test cleanup
     console.log('\n📋 Cleanup: Shutting down AI engine');
-    await aiEnhanced.shutdown();
+    await aiEnhanced.cleanup();
     console.log('✅ Shutdown complete');
 
     // Final summary
@@ -217,9 +217,9 @@ async function runEnhancedAITests(): Promise<void> {
   } catch (error) {
     console.error('❌ Test failed:', error);
     
-    if (aiEnhanced) {
+    if (typeof aiEnhanced !== 'undefined' && aiEnhanced) {
       try {
-        await aiEnhanced.shutdown();
+        await aiEnhanced.cleanup();
       } catch (shutdownError) {
         console.error('❌ Shutdown failed:', shutdownError);
       }

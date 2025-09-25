@@ -17,7 +17,7 @@ import {
   SchedulerError,
   ConcurrencyEvent,
   EventType
-} from '../types.js';
+} from '../types';
 
 export class TaskScheduler extends EventEmitter {
   private jobs = new Map<string, Job>();

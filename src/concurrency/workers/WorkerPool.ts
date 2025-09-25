@@ -19,8 +19,8 @@ import {
   ConcurrencyEvent,
   EventType,
   ResourceLimits
-} from '../types.js';
-import { TaskQueue } from '../queues/TaskQueue.js';
+} from '../types';
+import { TaskQueue } from '../queues/TaskQueue';
 
 export class WorkerPool extends EventEmitter implements IWorkerPool {
   public readonly id: string;
