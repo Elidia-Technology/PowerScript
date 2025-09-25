@@ -373,6 +373,16 @@ export class PowerScriptAudioPlayer extends EventEmitter implements AudioPlayer 
       }
     }, 100);
   }
+
+  // Add missing methods required by MultimediaProvider interface
+  async initialize(): Promise<void> {
+    // Already initialized in constructor, this is for interface compliance
+    this._setState('ready');
+  }
+
+  getSupportedFormats(): string[] {
+    return ['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac'];
+  }
 }
 
 /**

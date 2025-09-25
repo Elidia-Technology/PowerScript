@@ -19,7 +19,9 @@ import type {
   ProcessingResult,
   AudioProcessingOptions,
   VideoProcessingOptions,
-  ImageProcessingOptions
+  ImageProcessingOptions,
+  AudioFormat,
+  VideoFormat
 } from './types';
 import { MultimediaError } from './types';
 
@@ -58,6 +60,8 @@ import { MultimediaError } from './types';
  */
 
 export class PowerScriptGraphics extends EventEmitter implements MultimediaProvider {
+  public readonly name = 'PowerScriptGraphics';
+  public readonly capabilities = ['audio', 'video', 'streaming', 'processing'];
   public readonly config: MultimediaConfig;
   public readonly audioPlayer: AudioPlayer;
   public readonly videoPlayer: VideoPlayer;
@@ -278,6 +282,15 @@ export class PowerScriptGraphics extends EventEmitter implements MultimediaProvi
     };
   }
 
+  isFormatSupported(format: AudioFormat | VideoFormat): boolean {
+    const supportedFormats = this.getSupportedFormats();
+    return [...supportedFormats.audio, ...supportedFormats.video].includes(format as any);
+  }
+
+  getCapabilities(): string[] {
+    return [...this.capabilities];
+  }
+
   getGlobalStatus(): {
     initialized: boolean;
     audioPlayerState: MediaState;
@@ -425,40 +438,59 @@ export class PowerScriptGraphics extends EventEmitter implements MultimediaProvi
     // Forward audio player events
     this.audioPlayer.on('play', () => this.emit('audioPlay'));
     this.audioPlayer.on('pause', () => this.emit('audioPause'));
+    this.audioPlayer.on('stop', () => this.emit('audioStop'));
     this.audioPlayer.on('ended', () => this.emit('audioEnded'));
-    this.audioPlayer.on('error', (error) => this.emit('audioError', error));
-    this.audioPlayer.on('timeupdate', (current, duration) => 
-      this.emit('audioTimeUpdate', current, duration)
-    );
+    this.audioPlayer.on('error', (error: Error) => this.emit('audioError', error));
+    this.audioPlayer.on('timeupdate', (time: number) => this.emit('audioTimeUpdate', time));
+    this.audioPlayer.on('volumechange', (volume: number) => this.emit('audioVolumeChange', volume));
+    this.audioPlayer.on('loadstart', () => this.emit('audioLoadStart'));
+    this.audioPlayer.on('loadeddata', () => this.emit('audioLoadedData'));
+    this.audioPlayer.on('canplay', () => this.emit('audioCanPlay'));
+    this.audioPlayer.on('canplaythrough', () => this.emit('audioCanPlayThrough'));
 
     // Forward video player events
     this.videoPlayer.on('play', () => this.emit('videoPlay'));
     this.videoPlayer.on('pause', () => this.emit('videoPause'));
+    this.videoPlayer.on('stop', () => this.emit('videoStop'));
     this.videoPlayer.on('ended', () => this.emit('videoEnded'));
-    this.videoPlayer.on('error', (error) => this.emit('videoError', error));
-    this.videoPlayer.on('timeupdate', (current, duration) => 
-      this.emit('videoTimeUpdate', current, duration)
-    );
+    this.videoPlayer.on('error', (error: Error) => this.emit('videoError', error));
+    this.videoPlayer.on('timeupdate', (time: number) => this.emit('videoTimeUpdate', time));
+    this.videoPlayer.on('volumechange', (volume: number) => this.emit('videoVolumeChange', volume));
+    this.videoPlayer.on('loadstart', () => this.emit('videoLoadStart'));
+    this.videoPlayer.on('loadeddata', () => this.emit('videoLoadedData'));
+    this.videoPlayer.on('canplay', () => this.emit('videoCanPlay'));
+    this.videoPlayer.on('canplaythrough', () => this.emit('videoCanPlayThrough'));
+    this.videoPlayer.on('seeking', () => this.emit('videoSeeking'));
+    this.videoPlayer.on('seeked', () => this.emit('videoSeeked'));
+    this.videoPlayer.on('ratechange', (rate: number) => this.emit('videoRateChange', rate));
+    this.videoPlayer.on('durationchange', (duration: number) => this.emit('videoDurationChange', duration));
+    this.videoPlayer.on('progress', (buffered: number) => this.emit('videoProgress', buffered));
+    this.videoPlayer.on('qualitychange', (quality: string) => this.emit('videoQualityChange', quality));
+    this.videoPlayer.on('fullscreenchange', (isFullscreen: boolean) => this.emit('videoFullscreenChange', isFullscreen));
 
-    // Forward streaming events
-    this.streaming.on('streamCreated', (id, provider) => 
+    // Forward streaming events (cast to EventEmitter to access event methods)
+    (this.streaming as any).on('streamCreated', (id: string, provider: any) =>
       this.emit('streamCreated', id, provider)
     );
-    this.streaming.on('streamStarted', (id) => this.emit('streamStarted', id));
-    this.streaming.on('streamStopped', (id) => this.emit('streamStopped', id));
-    this.streaming.on('streamError', (id, error) => this.emit('streamError', id, error));
 
-    // Forward processing events
-    this.processor.on('operationStarted', (operation) => 
+    (this.streaming as any).on('streamStarted', (id: string) => this.emit('streamStarted', id));
+    (this.streaming as any).on('streamStopped', (id: string) => this.emit('streamStopped', id));
+    (this.streaming as any).on('streamError', (id: string, error: Error) => this.emit('streamError', id, error));
+
+    // Forward processing events (cast to EventEmitter to access event methods)
+    (this.processor as any).on('operationStarted', (operation: any) =>
       this.emit('processingStarted', operation)
     );
-    this.processor.on('operationCompleted', (operation) => 
+
+    (this.processor as any).on('operationCompleted', (operation: any) =>
       this.emit('processingCompleted', operation)
     );
-    this.processor.on('operationProgress', (operation) => 
+
+    (this.processor as any).on('operationProgress', (operation: any) =>
       this.emit('processingProgress', operation)
     );
-    this.processor.on('operationError', (id, error) => 
+
+    (this.processor as any).on('operationError', (id: string, error: Error) =>
       this.emit('processingError', id, error)
     );
   }

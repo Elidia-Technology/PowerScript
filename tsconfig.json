@@ -19,6 +19,7 @@
     "emitDecoratorMetadata": true,
     "allowJs": true,
     "incremental": true,
+    "downlevelIteration": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "baseUrl": "./src",

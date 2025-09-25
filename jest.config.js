@@ -14,4 +14,6 @@ module.exports = {
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  forceExit: true,
+  detectOpenHandles: false,
 };

@@ -551,6 +551,16 @@ export class PowerScriptVideoPlayer extends EventEmitter implements VideoPlayer 
       }
     }, 100);
   }
+
+  // Add missing methods required by MultimediaProvider interface
+  async initialize(): Promise<void> {
+    // Already initialized in constructor, this is for interface compliance
+    this._setState('ready');
+  }
+
+  getSupportedFormats(): string[] {
+    return ['mp4', 'webm', 'ogg', 'avi', 'mov', 'mkv'];
+  }
 }
 
 /**
