@@ -2,7 +2,7 @@
  * Simple Node.js test for PowerScript Security Simple Module
  */
 
-const { PowerScriptSecuritySimple } = require('./src/security-simple/PowerScriptSecuritySimple.ts');
+const { PowerScriptSecuritySimple } = require('../dist/PowerScriptSecuritySimple');
 
 async function testSecurity() {
   console.log('🔒 Testing PowerScript Simple Security Module...');
@@ -60,9 +60,5 @@ async function testSecurity() {
   }
 }
 
-// Run if this file is executed directly
-if (require.main === module) {
-  testSecurity();
-}
-
-module.exports = { testSecurity };
+// Run the test
+testSecurity();

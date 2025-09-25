@@ -2,7 +2,7 @@
  * Simple test for PowerScript Filesystem Module
  */
 
-const { PowerScriptFileSystem } = require('./dist/PowerScriptFileSystem');
+const { PowerScriptFileSystem } = require('../dist/PowerScriptFileSystem');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
