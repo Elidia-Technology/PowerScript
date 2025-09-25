@@ -308,7 +308,8 @@ export class PowerScriptVideoPlayer extends EventEmitter implements VideoPlayer 
         this._detectAvailableQualities();
       } else {
         // Mock implementation for Node.js
-        await new Promise(resolve => setTimeout(resolve, 200));
+        const delay = (process.env.NODE_ENV === 'test') ? 10 : 200;
+        await new Promise(resolve => setTimeout(resolve, delay));
         this._createMockMetadata(url);
         this._createMockQualities();
       }

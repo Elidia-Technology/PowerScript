@@ -212,7 +212,8 @@ export class PowerScriptAudioPlayer extends EventEmitter implements AudioPlayer 
         this._updateMetadata();
       } else {
         // Mock implementation for Node.js
-        await new Promise(resolve => setTimeout(resolve, 100));
+        const delay = (process.env.NODE_ENV === 'test') ? 10 : 100;
+        await new Promise(resolve => setTimeout(resolve, delay));
         this._createMockMetadata(url);
       }
 
@@ -587,7 +588,8 @@ export class AudioLogoOverlay extends EventEmitter implements LogoOverlay {
   private _fadeIn(): void {
     this.element.style.opacity = '0';
     
-    requestAnimationFrame(() => {
+    const raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : setTimeout;
+    raf(() => {
       this.element.style.opacity = String(this.config.opacity || 1);
     });
   }
