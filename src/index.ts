@@ -27,8 +27,25 @@ export * from './security-simple';
 // Filesystem & Storage Module (Phase 16)
 export * from './filesystem';
 
+// Enhanced AI Module (Phase 17)
+export { 
+  PowerScriptAIEnhanced,
+  LocalModelProvider,
+  GenerationProvider,
+  HardwareProvider
+} from './ai-enhanced';
+
 // Networking Module  
 export { PowerScriptNetworking } from './networking';
+
+// Graphics & Multimedia Module (Phase 15)
+export { PowerScriptGraphics, createMultimediaProvider } from './multimedia';
+export { 
+  PowerScriptAudioPlayer,
+  PowerScriptVideoPlayer, 
+  PowerScriptStreaming,
+  PowerScriptMultimediaProcessor
+} from './multimedia';
 
 // Database Module
 export { PowerScriptDatabase, createDatabaseProvider } from './database';
@@ -62,6 +79,7 @@ import { PowerScriptML } from './ml/PowerScriptML';
 import { PowerScriptSecurity } from './security/PowerScriptSecurity';
 import { PowerScriptSecuritySimple } from './security-simple/PowerScriptSecuritySimple';
 import { PowerScriptFileSystem } from './filesystem/PowerScriptFileSystem';
+import { PowerScriptAIEnhanced } from './ai-enhanced/PowerScriptAIEnhanced';
 import { PowerScriptNetworking } from './networking/PowerScriptNetworking';
 import { PowerScriptDatabase } from './database/PowerScriptDatabase';
 import { PowerScriptAnalytics } from './analytics/PowerScriptAnalytics';
@@ -84,6 +102,8 @@ export class PowerScript {
     private _securitySimple?: PowerScriptSecuritySimple;
   // Filesystem & Storage (Phase 16)
   private _filesystem?: PowerScriptFileSystem;
+  // Enhanced AI (Phase 17)
+  private _aiEnhanced?: PowerScriptAIEnhanced;
   private _patterns?: PowerScriptPatterns;
   private _concurrency?: PowerScriptConcurrency;
 
@@ -178,6 +198,14 @@ export class PowerScript {
       this._filesystem = new PowerScriptFileSystem();
     }
     return this._filesystem;
+  }
+
+  // Enhanced AI (Phase 17)
+  public get aiEnhanced(): PowerScriptAIEnhanced {
+    if (!this._aiEnhanced) {
+      this._aiEnhanced = new PowerScriptAIEnhanced();
+    }
+    return this._aiEnhanced;
   }
 
   /**
