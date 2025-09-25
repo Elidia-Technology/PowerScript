@@ -21,6 +21,12 @@ export { PowerScriptML } from './ml';
 // Security Module
 export { PowerScriptSecurity } from './security';
 
+// Simple Security Module (Phase 15)
+export * from './security-simple';
+
+// Filesystem & Storage Module (Phase 16)
+export * from './filesystem';
+
 // Networking Module  
 export { PowerScriptNetworking } from './networking';
 
@@ -33,15 +39,34 @@ export { PowerScriptAnalytics } from './analytics';
 // Graphics Module
 export * from './graphics';
 
+// Patterns Module
+export { 
+  PowerScriptPatterns,
+  ConfigManager,
+  AsyncUtils
+} from './patterns';
+
+// Concurrency Module
+export { 
+  PowerScriptConcurrency,
+  TaskQueue,
+  WorkerPool,
+  TaskScheduler
+} from './concurrency';
+
 // Global PowerScript namespace
 import { PowerScriptCore } from './core/PowerScriptCore';
 import { PowerScriptCompiler } from './compiler/PowerScriptCompiler';
 import { PowerScriptAI } from './ai/PowerScriptAI';
 import { PowerScriptML } from './ml/PowerScriptML';
 import { PowerScriptSecurity } from './security/PowerScriptSecurity';
+import { PowerScriptSecuritySimple } from './security-simple/PowerScriptSecuritySimple';
+import { PowerScriptFileSystem } from './filesystem/PowerScriptFileSystem';
 import { PowerScriptNetworking } from './networking/PowerScriptNetworking';
 import { PowerScriptDatabase } from './database/PowerScriptDatabase';
 import { PowerScriptAnalytics } from './analytics/PowerScriptAnalytics';
+import { PowerScriptPatterns } from './patterns/PowerScriptPatterns';
+import { PowerScriptConcurrency } from './concurrency/PowerScriptConcurrency';
 
 /**
  * Main PowerScript class that provides unified access to all modules
@@ -54,6 +79,13 @@ export class PowerScript {
   private _ml?: PowerScriptML;
   private _database?: PowerScriptDatabase;
   private _analytics?: PowerScriptAnalytics;
+  private _security?: PowerScriptSecurity;
+  // Simple Security (Phase 15)
+    private _securitySimple?: PowerScriptSecuritySimple;
+  // Filesystem & Storage (Phase 16)
+  private _filesystem?: PowerScriptFileSystem;
+  private _patterns?: PowerScriptPatterns;
+  private _concurrency?: PowerScriptConcurrency;
 
   private constructor() {
     this._core = new PowerScriptCore();
@@ -127,6 +159,47 @@ export class PowerScript {
       instance._analytics = PowerScriptAnalytics.getInstance();
     }
     return instance._analytics;
+  }
+
+  /**
+   * Get the enhanced security instance
+   */
+  // Simple Security (Phase 15)
+  public get securitySimple(): PowerScriptSecuritySimple {
+    if (!this._securitySimple) {
+      this._securitySimple = new PowerScriptSecuritySimple();
+    }
+    return this._securitySimple;
+  }
+
+  // Filesystem & Storage (Phase 16)
+  public get filesystem(): PowerScriptFileSystem {
+    if (!this._filesystem) {
+      this._filesystem = new PowerScriptFileSystem();
+    }
+    return this._filesystem;
+  }
+
+  /**
+   * Get the patterns instance
+   */
+  public static get patterns(): PowerScriptPatterns {
+    const instance = PowerScript.getInstance();
+    if (!instance._patterns) {
+      instance._patterns = new PowerScriptPatterns();
+    }
+    return instance._patterns;
+  }
+
+  /**
+   * Get the concurrency instance
+   */
+  public static get concurrency(): PowerScriptConcurrency {
+    const instance = PowerScript.getInstance();
+    if (!instance._concurrency) {
+      instance._concurrency = new PowerScriptConcurrency();
+    }
+    return instance._concurrency;
   }
 
   /**
