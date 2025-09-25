@@ -27,6 +27,12 @@ export { PowerScriptNetworking } from './networking';
 // Database Module
 export { PowerScriptDatabase, createDatabaseProvider } from './database';
 
+// Analytics Module
+export { PowerScriptAnalytics } from './analytics';
+
+// Graphics Module
+export * from './graphics';
+
 // Global PowerScript namespace
 import { PowerScriptCore } from './core/PowerScriptCore';
 import { PowerScriptCompiler } from './compiler/PowerScriptCompiler';
@@ -35,6 +41,7 @@ import { PowerScriptML } from './ml/PowerScriptML';
 import { PowerScriptSecurity } from './security/PowerScriptSecurity';
 import { PowerScriptNetworking } from './networking/PowerScriptNetworking';
 import { PowerScriptDatabase } from './database/PowerScriptDatabase';
+import { PowerScriptAnalytics } from './analytics/PowerScriptAnalytics';
 
 /**
  * Main PowerScript class that provides unified access to all modules
@@ -46,6 +53,7 @@ export class PowerScript {
   private _ai?: PowerScriptAI;
   private _ml?: PowerScriptML;
   private _database?: PowerScriptDatabase;
+  private _analytics?: PowerScriptAnalytics;
 
   private constructor() {
     this._core = new PowerScriptCore();
@@ -108,6 +116,17 @@ export class PowerScript {
       instance._database = PowerScriptDatabase.getInstance();
     }
     return instance._database;
+  }
+
+  /**
+   * Get the analytics instance
+   */
+  public static get analytics(): PowerScriptAnalytics {
+    const instance = PowerScript.getInstance();
+    if (!instance._analytics) {
+      instance._analytics = PowerScriptAnalytics.getInstance();
+    }
+    return instance._analytics;
   }
 
   /**
