@@ -136,8 +136,8 @@ export interface VideoQuality {
 // ============================================================================
 
 export interface StreamingConfig {
-  protocol: StreamingProtocol;
-  url: string;
+  protocol?: StreamingProtocol;
+  url?: string;
   manifest?: string;
   segments?: StreamSegment[];
   bufferSize?: number;
@@ -145,8 +145,13 @@ export interface StreamingConfig {
   maxRetries?: number;
   retryDelay?: number;
   enableAdaptiveBitrate?: boolean;
+  enableAdaptiveStreaming?: boolean;
+  enableProgressiveStreaming?: boolean;
+  enableDynamicStreaming?: boolean;
   enableCaching?: boolean;
   cacheSize?: number; // MB
+  cacheConfig?: CacheConfig;
+  maxBandwidth?: number; // Maximum bandwidth in bytes/second
 }
 
 export interface StreamSegment {
@@ -320,7 +325,7 @@ export interface RecorderEvents {
 // MAIN MULTIMEDIA INTERFACES
 // ============================================================================
 
-export interface MultimediaProvider extends EventEmitter {
+export interface MultimediaProviderInterface extends EventEmitter {
   readonly name: string;
   readonly capabilities: string[];
   
@@ -679,6 +684,90 @@ export interface ConversionSettings {
 // ============================================================================
 // MAIN MODULE TYPES
 // ============================================================================
+
+export type StreamingState = 'idle' | 'loading' | 'streaming' | 'paused' | 'stopped' | 'error' | 'initializing' | 'ready';
+
+export interface StreamingMetrics {
+  streamId: string;
+  bitrate: number;
+  quality: string;
+  bufferedTime: number;
+  droppedFrames: number;
+  bandwidth: number;
+  latency: number;
+  bufferHealth: number;
+  playbackStalls: number;
+  currentQuality: StreamQuality;
+  averageBitrate: number;
+}
+
+export interface StreamQuality {
+  name: string;
+  label: string;
+  bitrate: number;
+  resolution: { width: number; height: number };
+  frameRate: number;
+}
+
+export interface StreamingProviderConfig {
+  protocol: StreamingProtocol;
+  quality: StreamQuality;
+  bufferSize: number;
+  retryAttempts: number;
+  type: 'progressive' | 'adaptive' | 'dynamic';
+}
+
+export interface AdaptiveStreamConfig extends StreamingProviderConfig {
+  qualities: StreamQuality[];
+  adaptationAlgorithm: 'bandwidth' | 'buffer' | 'hybrid';
+  enableAutomaticSwitching?: boolean;
+  switchingStrategy?: 'bandwidth-based' | 'buffer-based' | 'hybrid';
+}
+
+export interface ProgressiveStreamConfig extends StreamingProviderConfig {
+  chunkSize: number;
+  preloadSize: number;
+  preloadChunks?: number;
+}
+
+export interface DynamicStreamConfig extends StreamingProviderConfig {
+  adaptToNetwork: boolean;
+  maxQualitySwitch: number;
+  allowRuntimeUpdates?: boolean;
+}
+
+export interface CacheConfig {
+  enabled: boolean;
+  maxSize: number;
+  ttl: number;
+  enableDiskCache?: boolean;
+}
+
+export interface BufferConfig {
+  targetSize: number;
+  maxSize: number;
+  minSize: number;
+  rebufferThreshold: number;
+  healthThreshold: number;
+}
+
+export interface StreamProvider extends EventEmitter {
+  id: string;
+  url: string;
+  state: StreamingState;
+  quality: StreamQuality;
+  metrics: StreamingMetrics;
+  
+  // Methods expected by implementation
+  initialize(): Promise<void>;
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  destroy(): Promise<void>;
+  getState(): StreamingState;
+  getMetrics(): StreamingMetrics;
+  getAvailableQualities(): StreamQuality[];
+  switchQuality(quality: StreamQuality): Promise<void>;
+}
 
 export interface StreamingProvider {
   createStream(url: string, config: StreamingProviderConfig): Promise<StreamProvider>;

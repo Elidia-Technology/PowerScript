@@ -10,11 +10,12 @@ import type {
   StreamingState,
   StreamingMetrics,
   StreamingError,
+  StreamingProviderConfig,
   AdaptiveStreamConfig,
   ProgressiveStreamConfig,
   DynamicStreamConfig,
   CacheConfig,
-  StreamingProviderConfig
+  BufferConfig
 } from './types';
 import { MultimediaError } from './types';
 
@@ -35,21 +36,36 @@ const pipelineAsync = promisify(pipeline);
 
 export class PowerScriptStreaming extends EventEmitter implements StreamingProvider {
   public readonly config: StreamingConfig;
+  public readonly id!: string;
   
   private _providers: Map<string, StreamProvider> = new Map();
   private _state: StreamingState = 'idle';
   private _metrics: StreamingMetrics = {
+    streamId: '',
+    bitrate: 0,
+    quality: '',
+    bufferedTime: 0,
+    latency: 0,
     bandwidth: 0,
     bufferHealth: 0,
     droppedFrames: 0,
     playbackStalls: 0,
-    currentQuality: undefined,
+    currentQuality: {
+      name: 'auto',
+      label: 'Auto',
+      bitrate: 0,
+      resolution: { width: 0, height: 0 },
+      frameRate: 0
+    },
     averageBitrate: 0
   };
   private _cache?: StreamCache;
 
   constructor(config: StreamingConfig = {}) {
     super();
+    
+    // Initialize the id
+    (this as any).id = `streaming_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     this.config = {
       enableAdaptiveStreaming: true,
@@ -78,7 +94,6 @@ export class PowerScriptStreaming extends EventEmitter implements StreamingProvi
     try {
       this._setState('initializing');
 
-      const streamId = this._generateStreamId();
       let provider: StreamProvider;
 
       // Determine streaming type and create appropriate provider
@@ -100,17 +115,17 @@ export class PowerScriptStreaming extends EventEmitter implements StreamingProvi
           );
       }
 
-      // Register provider
-      this._providers.set(streamId, provider);
+      // Register provider using its own ID
+      this._providers.set(provider.id, provider);
 
       // Set up provider events
-      this._setupProviderEvents(provider, streamId);
+      this._setupProviderEvents(provider, provider.id);
 
       // Initialize provider
       await provider.initialize();
 
       this._setState('ready');
-      this.emit('streamCreated', streamId, provider);
+      this.emit('streamCreated', provider.id, provider);
 
       return provider;
 
@@ -254,6 +269,11 @@ export class PowerScriptStreaming extends EventEmitter implements StreamingProvi
     const allMetrics = activeStreams.map(provider => provider.getMetrics()).filter(Boolean) as StreamingMetrics[];
     
     this._metrics = {
+      streamId: this.id,
+      bitrate: this._calculateAverage(allMetrics.map(m => m.bitrate)),
+      quality: metrics.currentQuality?.name || 'auto',
+      bufferedTime: this._calculateAverage(allMetrics.map(m => m.bufferedTime)),
+      latency: this._calculateAverage(allMetrics.map(m => m.latency)),
       bandwidth: this._calculateAverage(allMetrics.map(m => m.bandwidth)),
       bufferHealth: this._calculateAverage(allMetrics.map(m => m.bufferHealth)),
       droppedFrames: allMetrics.reduce((sum, m) => sum + m.droppedFrames, 0),
@@ -291,25 +311,43 @@ export class PowerScriptStreaming extends EventEmitter implements StreamingProvi
  */
 class ProgressiveStreamProvider extends EventEmitter implements StreamProvider {
   public readonly config: ProgressiveStreamConfig;
+  public readonly id!: string;
+  public readonly url!: string;
   
   private _state: StreamingState = 'idle';
-  private _metrics: StreamingMetrics;
+  private _metrics!: StreamingMetrics;
   private _qualities: StreamQuality[] = [];
   private _currentQuality?: StreamQuality;
   private _cache?: StreamCache;
 
+  // StreamProvider interface implementation
+  public get state(): StreamingState { return this._state; }
+  public get quality(): StreamQuality { 
+    return this._currentQuality || {
+      name: 'auto',
+      label: 'Auto',
+      bitrate: 0,
+      resolution: { width: 0, height: 0 },
+      frameRate: 0
+    };
+  }
+  public get metrics(): StreamingMetrics { return this._metrics; }
+
   constructor(
-    private _url: string,
+    _url: string,
     config: ProgressiveStreamConfig,
     cache?: StreamCache
   ) {
     super();
     
+    // Initialize required StreamProvider properties
+    this.id = `progressive_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    this.url = _url;
+    
     this.config = {
-      chunkSize: 1024 * 1024, // 1MB chunks
       preloadChunks: 3,
-      enableRangeRequests: true,
-      ...config
+      ...config,
+      chunkSize: config.chunkSize || 1024 * 1024 // 1MB chunks default
     };
 
     this._cache = cache;
@@ -330,7 +368,7 @@ class ProgressiveStreamProvider extends EventEmitter implements StreamProvider {
       const initError = new MultimediaError(
         `Failed to initialize progressive stream: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'STREAM_INIT_FAILED',
-        { url: this._url, originalError: error }
+        { url: this.url, originalError: error }
       );
       this._setState('error');
       this.emit('error', initError);
@@ -382,31 +420,35 @@ class ProgressiveStreamProvider extends EventEmitter implements StreamProvider {
 
   private _initializeMetrics(): void {
     this._metrics = {
+      streamId: this.id,
+      bitrate: 0,
+      quality: 'progressive',
+      bufferedTime: 0,
+      latency: 0,
       bandwidth: 0,
       bufferHealth: 100,
       droppedFrames: 0,
       playbackStalls: 0,
-      currentQuality: undefined,
+      currentQuality: this.config.quality || {
+        name: 'auto',
+        label: 'Auto',
+        bitrate: 0,
+        resolution: { width: 0, height: 0 },
+        frameRate: 0
+      },
       averageBitrate: 0
     };
   }
 
   private async _analyzeStream(): Promise<void> {
-    // Create mock qualities for progressive streaming
+    // For progressive streaming, use the configured quality or create a single default
     this._qualities = [
-      {
-        label: '480p',
-        width: 854,
-        height: 480,
-        bitrate: 1500000,
-        url: this._url
-      },
-      {
-        label: '720p',
-        width: 1280,
-        height: 720,
+      this.config.quality || {
+        name: 'progressive',
+        label: 'Progressive',
+        resolution: { width: 1280, height: 720 },
         bitrate: 2500000,
-        url: this._url
+        frameRate: 30
       }
     ];
 
@@ -455,26 +497,43 @@ class ProgressiveStreamProvider extends EventEmitter implements StreamProvider {
  */
 class AdaptiveStreamProvider extends EventEmitter implements StreamProvider {
   public readonly config: AdaptiveStreamConfig;
+  public readonly id!: string;
+  public readonly url!: string;
   
   private _state: StreamingState = 'idle';
-  private _metrics: StreamingMetrics;
+  private _metrics!: StreamingMetrics;
   private _qualities: StreamQuality[] = [];
   private _currentQuality?: StreamQuality;
   private _cache?: StreamCache;
   private _bandwidthMonitor?: BandwidthMonitor;
 
+  // StreamProvider interface implementation
+  public get state(): StreamingState { return this._state; }
+  public get quality(): StreamQuality { 
+    return this._currentQuality || {
+      name: 'auto',
+      label: 'Auto',
+      bitrate: 0,
+      resolution: { width: 0, height: 0 },
+      frameRate: 0
+    };
+  }
+  public get metrics(): StreamingMetrics { return this._metrics; }
+
   constructor(
-    private _url: string,
+    _url: string,
     config: AdaptiveStreamConfig,
     cache?: StreamCache
   ) {
     super();
     
+    // Initialize required StreamProvider properties
+    this.id = `adaptive_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    this.url = _url;
+    
     this.config = {
       enableAutomaticSwitching: true,
       switchingStrategy: 'bandwidth-based',
-      minBufferLength: 5,
-      maxBufferLength: 30,
       ...config
     };
 
@@ -503,7 +562,7 @@ class AdaptiveStreamProvider extends EventEmitter implements StreamProvider {
       const initError = new MultimediaError(
         `Failed to initialize adaptive stream: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'STREAM_INIT_FAILED',
-        { url: this._url, originalError: error }
+        { url: this.url, originalError: error }
       );
       this._setState('error');
       this.emit('error', initError);
@@ -577,57 +636,73 @@ class AdaptiveStreamProvider extends EventEmitter implements StreamProvider {
 
   private _initializeMetrics(): void {
     this._metrics = {
+      streamId: this.id,
+      bitrate: 0,
+      quality: 'adaptive',
+      bufferedTime: 0,
+      latency: 0,
       bandwidth: 0,
       bufferHealth: 100,
       droppedFrames: 0,
       playbackStalls: 0,
-      currentQuality: undefined,
+      currentQuality: this.config.quality || {
+        name: 'auto',
+        label: 'Auto',
+        bitrate: 0,
+        resolution: { width: 0, height: 0 },
+        frameRate: 0
+      },
       averageBitrate: 0
     };
   }
 
   private async _analyzeAdaptiveStream(): Promise<void> {
-    // Create multiple quality levels for adaptive streaming
-    this._qualities = [
-      {
-        label: '240p',
-        width: 426,
-        height: 240,
-        bitrate: 500000,
-        url: `${this._url}?quality=240p`
-      },
-      {
-        label: '360p',
-        width: 640,
-        height: 360,
-        bitrate: 1000000,
-        url: `${this._url}?quality=360p`
-      },
-      {
-        label: '480p',
-        width: 854,
-        height: 480,
-        bitrate: 1500000,
-        url: `${this._url}?quality=480p`
-      },
-      {
-        label: '720p',
-        width: 1280,
-        height: 720,
-        bitrate: 2500000,
-        url: `${this._url}?quality=720p`
-      },
-      {
-        label: '1080p',
-        width: 1920,
-        height: 1080,
-        bitrate: 5000000,
-        url: `${this._url}?quality=1080p`
-      }
-    ];
+    // Use provided qualities from config, or create defaults if none provided
+    if (this.config.qualities && this.config.qualities.length > 0) {
+      this._qualities = [...this.config.qualities];
+    } else {
+      // Create default quality levels for adaptive streaming
+      this._qualities = [
+        {
+          name: '240p',
+          label: '240p',
+          resolution: { width: 426, height: 240 },
+          bitrate: 500000,
+          frameRate: 30
+        },
+        {
+          name: '360p',
+          label: '360p',
+          resolution: { width: 640, height: 360 },
+          bitrate: 1000000,
+          frameRate: 30
+        },
+        {
+          name: '480p',
+          label: '480p',
+          resolution: { width: 854, height: 480 },
+          bitrate: 1500000,
+          frameRate: 30
+        },
+        {
+          name: '720p',
+          label: '720p',
+          resolution: { width: 1280, height: 720 },
+          bitrate: 2500000,
+          frameRate: 30
+        },
+        {
+          name: '1080p',
+          label: '1080p',
+          resolution: { width: 1920, height: 1080 },
+          bitrate: 5000000,
+          frameRate: 30
+        }
+      ];
+    }
 
-    // Start with medium quality
-    this._currentQuality = this._qualities.find(q => q.label === '480p') || this._qualities[0];
+    // Start with the configured quality or medium quality
+    this._currentQuality = this.config.quality || this._qualities.find(q => q.label === '480p') || this._qualities[0];
     this._metrics.currentQuality = this._currentQuality;
   }
 
@@ -705,19 +780,38 @@ class AdaptiveStreamProvider extends EventEmitter implements StreamProvider {
  */
 class DynamicStreamProvider extends EventEmitter implements StreamProvider {
   public readonly config: DynamicStreamConfig;
+  public readonly id!: string;
+  public readonly url!: string;
   
   private _state: StreamingState = 'idle';
-  private _metrics: StreamingMetrics;
+  private _metrics!: StreamingMetrics;
   private _qualities: StreamQuality[] = [];
   private _currentQuality?: StreamQuality;
   private _cache?: StreamCache;
 
+  // StreamProvider interface implementation
+  public get state(): StreamingState { return this._state; }
+  public get quality(): StreamQuality { 
+    return this._currentQuality || {
+      name: 'auto',
+      label: 'Auto',
+      bitrate: 0,
+      resolution: { width: 0, height: 0 },
+      frameRate: 0
+    };
+  }
+  public get metrics(): StreamingMetrics { return this._metrics; }
+
   constructor(
-    private _url: string,
+    _url: string,
     config: DynamicStreamConfig,
     cache?: StreamCache
   ) {
     super();
+    
+    // Initialize required StreamProvider properties
+    this.id = `dynamic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    this.url = _url;
     
     this.config = {
       allowRuntimeUpdates: true,
@@ -771,23 +865,34 @@ class DynamicStreamProvider extends EventEmitter implements StreamProvider {
 
   private _initializeMetrics(): void {
     this._metrics = {
+      streamId: this.id,
+      bitrate: 0,
+      quality: 'dynamic',
+      bufferedTime: 0,
+      latency: 0,
       bandwidth: 0,
       bufferHealth: 100,
       droppedFrames: 0,
       playbackStalls: 0,
-      currentQuality: undefined,
+      currentQuality: this.config.quality || {
+        name: 'auto',
+        label: 'Auto',
+        bitrate: 0,
+        resolution: { width: 0, height: 0 },
+        frameRate: 0
+      },
       averageBitrate: 0
     };
   }
 
   private async _analyzeDynamicStream(): Promise<void> {
     this._qualities = [
-      {
+      this.config.quality || {
+        name: 'auto',
         label: 'Auto',
-        width: 1920,
-        height: 1080,
+        resolution: { width: 1920, height: 1080 },
         bitrate: 0, // Dynamic
-        url: this._url
+        frameRate: 30
       }
     ];
 
@@ -878,10 +983,10 @@ class StreamCache extends EventEmitter {
     super();
     
     this.config = {
-      maxSize: 100 * 1024 * 1024, // 100MB default
-      ttl: 3600000, // 1 hour default
-      enableDiskCache: false,
-      ...config
+      ...config,
+      maxSize: config.maxSize || 100 * 1024 * 1024, // 100MB default
+      ttl: config.ttl || 3600000, // 1 hour default
+      enableDiskCache: config.enableDiskCache ?? false
     };
   }
 
