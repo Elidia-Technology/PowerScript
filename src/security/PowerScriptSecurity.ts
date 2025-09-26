@@ -56,6 +56,12 @@ export class PowerScriptSecurity extends EventDispatcher {
         this.initialize();
     }
 
+    public static initialize(config: SecurityConfig): void {
+        if (!PowerScriptSecurity.instance) {
+            PowerScriptSecurity.instance = new PowerScriptSecurity(config);
+        }
+    }
+
     public static getInstance(config?: SecurityConfig): PowerScriptSecurity {
         if (!PowerScriptSecurity.instance) {
             if (!config) {

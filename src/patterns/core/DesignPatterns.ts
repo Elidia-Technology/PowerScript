@@ -348,7 +348,7 @@ export class SortStrategy {
     };
 
     static QUICK_SORT: IStrategy<number[], number[]> = {
-        execute: (input: number[]) => {
+        execute: (input: number[]): number[] => {
             if (input.length <= 1) return input;
             
             const pivot = input[Math.floor(input.length / 2)];
@@ -356,10 +356,13 @@ export class SortStrategy {
             const middle = input.filter(x => x === pivot);
             const right = input.filter(x => x > pivot);
             
+            const leftSorted = SortStrategy.QUICK_SORT.execute(left) as number[];
+            const rightSorted = SortStrategy.QUICK_SORT.execute(right) as number[];
+            
             return [
-                ...SortStrategy.QUICK_SORT.execute(left),
+                ...leftSorted,
                 ...middle,
-                ...SortStrategy.QUICK_SORT.execute(right)
+                ...rightSorted
             ];
         }
     };

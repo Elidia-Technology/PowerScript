@@ -59,7 +59,7 @@ export class SecuritySandbox {
             // Execute code (simplified - in production would use vm or worker_threads)
             const result = await this.executeInSandbox(code, isolatedContext);
             
-            return result;
+            return result as T;
         } catch (error) {
             throw new Error(`Sandbox execution failed: ${(error as Error).message}`);
         }
@@ -147,7 +147,7 @@ export class SecuritySandbox {
  */
 export class PowerScriptPatterns implements IPowerScriptPatterns {
     // Pattern instances
-    public readonly singleton = Singleton;
+    public readonly singleton = new Singleton();
     public readonly observer = new Subject();
     public readonly factory = new Factory();
     public readonly command = new CommandInvoker();
@@ -255,7 +255,7 @@ export class PowerScriptPatterns implements IPowerScriptPatterns {
      * Get comprehensive module statistics
      */
     getStats(): {
-        status: ReturnType<typeof this.getStatus>;
+        status: any;
         container: ReturnType<DependencyContainer['getStats']>;
         config: ReturnType<ConfigManager['getStats']>;
         logger: ReturnType<EnhancedLogger['getStats']>;
@@ -289,7 +289,7 @@ export class PowerScriptPatterns implements IPowerScriptPatterns {
             name: 'PowerScriptPatterns',
             level: loggingConfig.level || LogLevel.INFO,
             transports
-        });
+        }) as EnhancedLogger;
     }
 
     private registerCoreServices(): void {

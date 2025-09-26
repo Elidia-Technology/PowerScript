@@ -10,7 +10,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import { AS3Compiler, AS3CompilerOptions } from './AS3Compiler';
-import { PowerScript } from '../PowerScript';
+import { PowerScript } from '../index';
 
 export interface CLIOptions {
     input?: string;

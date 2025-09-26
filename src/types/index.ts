@@ -4,8 +4,8 @@
  * Type definitions for PowerScript core functionality
  */
 
-// Node.js Buffer compatibility
-declare global {
+// Node.js Buffer compatibility - using module augmentation to avoid conflicts
+declare module "buffer" {
   interface Buffer {
     length: number;
     readUInt8(offset: number): number;
@@ -54,7 +54,7 @@ declare global {
     byteLength(string: string, encoding?: string): number;
   }
 
-  var Buffer: BufferConstructor;
+  // var Buffer: BufferConstructor; // Commented out to avoid conflict with @types/node
 
   interface RequireFunction {
     (id: string): any;
@@ -93,7 +93,7 @@ declare global {
     uptime(): number;
   }
 
-  var process: Process;
+  // var process: Process; // Commented out to avoid conflict with @types/node
 
   // Global Node.js functions
   function setImmediate(callback: (...args: any[]) => void, ...args: any[]): any;
