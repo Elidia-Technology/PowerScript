@@ -480,3 +480,238 @@ export async function runDatabaseTests(): Promise<void> {
     const runner = new DatabaseTestRunner();
     await runner.run();
 }
+
+// Jest tests
+describe('PowerScript Database Module', () => {
+    let testRunner: DatabaseTestRunner;
+
+    beforeAll(() => {
+        testRunner = new DatabaseTestRunner();
+    });
+
+    describe('Database Provider Connections', () => {
+        it('should connect to PostgreSQL provider', async () => {
+            const provider = new MockPostgreSQLProvider(testConfigs.postgresql);
+            await provider.connect();
+            expect(provider.isConnected()).toBe(true);
+            
+            const pingResult = await provider.ping();
+            expect(pingResult).toBe(true);
+            
+            await provider.disconnect();
+            expect(provider.isConnected()).toBe(false);
+        });
+
+        it('should connect to MySQL provider', async () => {
+            const provider = new MockMySQLProvider(testConfigs.mysql);
+            await provider.connect();
+            expect(provider.isConnected()).toBe(true);
+            
+            const pingResult = await provider.ping();
+            expect(pingResult).toBe(true);
+            
+            await provider.disconnect();
+            expect(provider.isConnected()).toBe(false);
+        });
+
+        it('should connect to MongoDB provider', async () => {
+            const provider = new MockMongoDBProvider(testConfigs.mongodb);
+            await provider.connect();
+            expect(provider.isConnected()).toBe(true);
+            
+            const pingResult = await provider.ping();
+            expect(pingResult).toBe(true);
+            
+            await provider.disconnect();
+            expect(provider.isConnected()).toBe(false);
+        });
+
+        it('should connect to Redis provider', async () => {
+            const provider = new MockRedisProvider(testConfigs.redis);
+            await provider.connect();
+            expect(provider.isConnected()).toBe(true);
+            
+            const pingResult = await provider.ping();
+            expect(pingResult).toBe(true);
+            
+            await provider.disconnect();
+            expect(provider.isConnected()).toBe(false);
+        });
+    });
+
+    describe('CRUD Operations', () => {
+        it('should perform insert operations', async () => {
+            const provider = new MockPostgreSQLProvider(testConfigs.postgresql);
+            await provider.connect();
+            
+            const result = await provider.insert('test_users', { 
+                name: 'John Doe', 
+                email: 'john@example.com',
+                age: 30
+            });
+            
+            expect(result.count).toBe(1);
+            expect(result.data[0]).toBeDefined();
+            
+            await provider.disconnect();
+        });
+
+        it('should perform find operations', async () => {
+            const provider = new MockPostgreSQLProvider(testConfigs.postgresql);
+            await provider.connect();
+            
+            // Insert first
+            await provider.insert('test_users', { 
+                name: 'Jane Doe', 
+                email: 'jane@example.com',
+                age: 25
+            });
+            
+            const result = await provider.findOne('test_users', { name: 'Jane Doe' });
+            expect(result.data).toBeDefined();
+            expect(result.metadata.found).toBe(true);
+            
+            await provider.disconnect();
+        });
+
+        it('should perform update operations', async () => {
+            const provider = new MockPostgreSQLProvider(testConfigs.postgresql);
+            await provider.connect();
+            
+            // Insert first
+            await provider.insert('test_users', { 
+                name: 'Update Test', 
+                email: 'update@example.com',
+                age: 35
+            });
+            
+            const result = await provider.update('test_users', 
+                { age: 36 }, 
+                { name: 'Update Test' }
+            );
+            
+            expect(result.count).toBeGreaterThan(0);
+            expect(result.metadata.affectedRows).toBeTruthy();
+            
+            await provider.disconnect();
+        });
+
+        it('should perform delete operations', async () => {
+            const provider = new MockPostgreSQLProvider(testConfigs.postgresql);
+            await provider.connect();
+            
+            // Insert first
+            await provider.insert('test_users', { 
+                name: 'Delete Test', 
+                email: 'delete@example.com',
+                age: 40
+            });
+            
+            const result = await provider.delete('test_users', { name: 'Delete Test' });
+            expect(result.metadata.affectedRows).toBeTruthy();
+            
+            await provider.disconnect();
+        });
+    });
+
+    describe('Transaction Operations', () => {
+        it('should handle transaction commits', async () => {
+            const provider = new MockPostgreSQLProvider(testConfigs.postgresql);
+            await provider.connect();
+            
+            const tx = await provider.beginTransaction();
+            expect(tx.status).toBe('active');
+            
+            await tx.insert('test_tx', { name: 'TX User 1', email: 'tx1@example.com' });
+            await tx.insert('test_tx', { name: 'TX User 2', email: 'tx2@example.com' });
+            
+            await tx.commit();
+            expect(tx.status).not.toBe('active');
+            
+            await provider.disconnect();
+        });
+
+        it('should handle transaction rollbacks', async () => {
+            const provider = new MockPostgreSQLProvider(testConfigs.postgresql);
+            await provider.connect();
+            
+            const tx = await provider.beginTransaction();
+            expect(tx.status).toBe('active');
+            
+            await tx.insert('test_tx', { name: 'TX User 3', email: 'tx3@example.com' });
+            await tx.rollback();
+            expect(tx.status).not.toBe('active');
+            
+            await provider.disconnect();
+        });
+    });
+
+    describe('Redis Special Operations', () => {
+        it('should handle string operations', async () => {
+            const provider = new MockRedisProvider(testConfigs.redis);
+            await provider.connect();
+            
+            await provider.set('test_key', 'test_value');
+            const value = await provider.get('test_key');
+            expect(value).toBe('test_value');
+            
+            const exists = await provider.exists('test_key');
+            expect(exists).toBe(true);
+            
+            await provider.disconnect();
+        });
+
+        it('should handle hash operations', async () => {
+            const provider = new MockRedisProvider(testConfigs.redis);
+            await provider.connect();
+            
+            await provider.hset('test_hash', 'field1', 'value1');
+            const value = await provider.hget('test_hash', 'field1');
+            expect(value).toBe('value1');
+            
+            await provider.disconnect();
+        });
+
+        it('should handle list operations', async () => {
+            const provider = new MockRedisProvider(testConfigs.redis);
+            await provider.connect();
+            
+            const length = await provider.lpush('test_list', 'item1', 'item2');
+            expect(length).toBe(2);
+            
+            const listLength = await provider.llen('test_list');
+            expect(listLength).toBe(2);
+            
+            await provider.disconnect();
+        });
+    });
+
+    describe('Error Handling', () => {
+        it('should handle connection errors', async () => {
+            const invalidConfig = {
+                provider: 'postgresql' as const,
+                connection: { host: 'invalid-host', port: 5432 }
+            };
+            
+            const provider = new MockPostgreSQLProvider(invalidConfig);
+            
+            try {
+                await provider.connect();
+                fail('Should have thrown connection error');
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+            }
+        });
+
+        it('should handle operations on disconnected provider', async () => {
+            const provider = new MockPostgreSQLProvider(testConfigs.postgresql);
+            
+            try {
+                await provider.findOne('test_table', { id: 1 });
+                fail('Should have thrown disconnected error');
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error);
+            }
+        });
+    });
+});

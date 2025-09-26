@@ -1,9 +1,9 @@
 /**
- * PowerScript Advanced AI Systems - RAG Module Index
- * 
- * Main entry point for Retrieval-Augmented Generation (RAG) system
- * Exports all RAG-related classes and interfaces
+ * RAG (Retrieval-Augmented Generation) System
+ * Core RAG implementation with vector database integration
  */
+
+export { RAGSystem as PowerScriptRAG } from './RAGSystem';
 
 // Vector Database
 export {

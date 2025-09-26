@@ -5,7 +5,7 @@
  * and improved AS3 syntax support.
  */
 
-import { Command } from 'commander';
+// import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
@@ -27,14 +27,14 @@ export interface CLIOptions {
 }
 
 export class PowerScriptCLI {
-    private program: Command;
+    private program: any; // Command;
     private compiler: AS3Compiler;
     private watchedFiles: Set<string> = new Set();
     private compileQueue: Set<string> = new Set();
     private isCompiling: boolean = false;
 
     constructor() {
-        this.program = new Command();
+        // this.program = new Command();
         this.compiler = new AS3Compiler();
         this.setupCommands();
     }

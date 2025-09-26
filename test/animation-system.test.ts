@@ -3,6 +3,19 @@
  * Tests the core Tween engine, easing functions, and animation controller
  */
 
+// Setup requestAnimationFrame polyfill for Node.js
+if (typeof (globalThis as any).requestAnimationFrame === 'undefined') {
+  (globalThis as any).requestAnimationFrame = (callback: (time: number) => void) => {
+    return setTimeout(() => callback(Date.now()), 16);
+  };
+}
+
+if (typeof (globalThis as any).cancelAnimationFrame === 'undefined') {
+  (globalThis as any).cancelAnimationFrame = (id: number) => {
+    clearTimeout(id);
+  };
+}
+
 import { Tween, TweenState } from '../src/animation/core/Tween';
 import { Easing } from '../src/animation/easing/EasingFunctions';
 import { AnimationController, TweenManager } from '../src/animation/core/AnimationController';

@@ -99,7 +99,7 @@ async function testPatternsModule() {
         if (value !== 1) throw new Error('Command execution failed');
         
         await invoker.undo();
-        if (value !== 0) throw new Error(`Command undo failed: expected 0, got ${value}`);
+        if (value as number !== 0) throw new Error(`Command undo failed: expected 0, got ${value}`);
     });
 
     // Test 5: Dependency Injection Container

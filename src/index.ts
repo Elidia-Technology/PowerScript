@@ -71,6 +71,29 @@ export {
   TaskScheduler
 } from './concurrency';
 
+// Cloud & Deployment Module (Module 19)
+export { PowerScriptCloud } from './cloud';
+
+// Testing & Debugging Module (Module 24)
+import PowerScriptTest, { testFramework } from './testing';
+
+// Scaffolding & Code Generation Module (Module 25)
+import { PowerScriptScaffolding } from './scaffolding';
+
+// AI Advanced Module (Module 21)
+export { 
+  RAGSystem,
+  VectorDatabase,
+  MemoryVectorDatabase,
+  EmbeddingService,
+  DocumentChunker,
+  SemanticSearch,
+  createRAGSystem,
+  createSemanticSearch,
+  RAGUtils,
+  RAGPresets
+} from './ai-advanced';
+
 // Global PowerScript namespace
 import { PowerScriptCore } from './core/PowerScriptCore';
 import { PowerScriptCompiler } from './compiler/PowerScriptCompiler';
@@ -85,6 +108,12 @@ import { PowerScriptDatabase } from './database/PowerScriptDatabase';
 import { PowerScriptAnalytics } from './analytics/PowerScriptAnalytics';
 import { PowerScriptPatterns } from './patterns/PowerScriptPatterns';
 import { PowerScriptConcurrency } from './concurrency/PowerScriptConcurrency';
+// Import AI-Advanced system classes
+import { PowerScriptRAG } from './ai-advanced/RAG';
+import { PowerScriptMultiAgent } from './ai-advanced/MultiAgent';
+
+// Import standalone PowerScript classes for use in main class
+import { PowerScriptCloud } from './cloud';
 
 /**
  * Main PowerScript class that provides unified access to all modules
@@ -106,6 +135,9 @@ export class PowerScript {
   private _aiEnhanced?: PowerScriptAIEnhanced;
   private _patterns?: PowerScriptPatterns;
   private _concurrency?: PowerScriptConcurrency;
+  private _cloud?: PowerScriptCloud;
+  private _testing?: PowerScriptTest;
+  private _scaffolding?: PowerScriptScaffolding;
 
   private constructor() {
     this._core = new PowerScriptCore();
@@ -231,6 +263,39 @@ export class PowerScript {
   }
 
   /**
+   * Get the cloud instance
+   */
+  public static get cloud(): PowerScriptCloud {
+    const instance = PowerScript.getInstance();
+    if (!instance._cloud) {
+      instance._cloud = new PowerScriptCloud();
+    }
+    return instance._cloud;
+  }
+
+  /**
+   * Get the testing instance
+   */
+  public static get testing(): PowerScriptTest {
+    const instance = PowerScript.getInstance();
+    if (!instance._testing) {
+      instance._testing = new PowerScriptTest();
+    }
+    return instance._testing;
+  }
+
+  /**
+   * Get the scaffolding instance
+   */
+  public static get scaffolding(): PowerScriptScaffolding {
+    const instance = PowerScript.getInstance();
+    if (!instance._scaffolding) {
+      instance._scaffolding = new PowerScriptScaffolding();
+    }
+    return instance._scaffolding;
+  }
+
+  /**
    * Get PowerScript version
    */
   public static get version(): string {
@@ -248,6 +313,9 @@ export class PowerScript {
 
 // Default export
 export default PowerScript;
+
+// Additional exports
+export { testFramework };
 
 // Global PowerScript instance (for compatibility)
 if (typeof globalThis !== 'undefined') {

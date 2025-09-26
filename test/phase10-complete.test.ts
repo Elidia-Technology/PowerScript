@@ -286,5 +286,14 @@ async function runComprehensiveRenderingTest() {
     }
 }
 
-// Run the comprehensive test
-runComprehensiveRenderingTest();
+// Jest test wrapper
+describe('Phase 10 Complete Rendering System', () => {
+  it('should run comprehensive rendering test successfully', async () => {
+    await expect(runComprehensiveRenderingTest()).resolves.not.toThrow();
+  });
+});
+
+// Run the test if not in Jest environment
+if (typeof describe === 'undefined') {
+  runComprehensiveRenderingTest();
+}

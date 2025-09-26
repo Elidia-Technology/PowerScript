@@ -215,5 +215,14 @@ async function runWebGLRendererTest() {
     }
 }
 
-// Run the test
-runWebGLRendererTest();
+// Jest test wrapper
+describe('WebGL Rendering', () => {
+  it('should run WebGL renderer test successfully', async () => {
+    await expect(runWebGLRendererTest()).resolves.not.toThrow();
+  });
+});
+
+// Run the test if not in Jest environment
+if (typeof describe === 'undefined') {
+  runWebGLRendererTest();
+}

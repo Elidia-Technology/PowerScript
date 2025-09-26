@@ -131,5 +131,14 @@ async function testNetworkingBasics() {
   }
 }
 
-// Run the test
-testNetworkingBasics().catch(console.error);
+// Jest test wrapper
+describe('Networking AS3 Style', () => {
+  it('should run AS3-style networking test successfully', async () => {
+    await expect(testNetworkingBasics()).resolves.not.toThrow();
+  });
+});
+
+// Run the test if not in Jest environment
+if (typeof describe === 'undefined') {
+  testNetworkingBasics().catch(console.error);
+}

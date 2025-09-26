@@ -11,7 +11,7 @@ module.exports = {
     '!src/**/*.d.ts',
   ],
   setupFilesAfterEnv: ['<rootDir>/test/setup.js'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   forceExit: true,

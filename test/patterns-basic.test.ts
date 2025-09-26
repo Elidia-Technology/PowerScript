@@ -471,8 +471,17 @@ async function testPatternsBasic() {
     return { testsRun, testsPassed, successRate: (testsPassed / testsRun) * 100 };
 }
 
+// Jest test wrapper
+describe('Patterns Basic', () => {
+  it('should run basic patterns test successfully', async () => {
+    const result = await testPatternsBasic();
+    expect(result.testsPassed).toBeGreaterThan(0);
+    expect(result.successRate).toBeGreaterThan(80);
+  });
+});
+
 // Run tests if executed directly
-if (require.main === module) {
+if (require.main === module && typeof describe === 'undefined') {
     testPatternsBasic().catch(console.error);
 }
 

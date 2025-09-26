@@ -229,11 +229,18 @@ async function runEnhancedAITests(): Promise<void> {
   }
 }
 
+// Jest test wrapper
+describe('AI Enhanced CPU', () => {
+  it('should run enhanced AI CPU test successfully', async () => {
+    await expect(runEnhancedAITests()).resolves.not.toThrow();
+  });
+});
+
 // Export for use in other tests
 export { runEnhancedAITests };
 
 // Run tests if called directly
-if (require.main === module) {
+if (require.main === module && typeof describe === 'undefined') {
   runEnhancedAITests()
     .then(() => {
       console.log('\n🏁 Enhanced AI test suite completed successfully!');
