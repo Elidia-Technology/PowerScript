@@ -21,7 +21,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testFramework = exports.PowerScript = exports.RAGPresets = exports.RAGUtils = exports.createSemanticSearch = exports.createRAGSystem = exports.SemanticSearch = exports.DocumentChunker = exports.EmbeddingService = exports.MemoryVectorDatabase = exports.VectorDatabase = exports.RAGSystem = exports.Gateway = exports.ServiceDiscovery = exports.LoadBalancer = exports.Middleware = exports.Router = exports.server = exports.PowerScriptServer = exports.PowerScriptCloud = exports.TaskScheduler = exports.WorkerPool = exports.TaskQueue = exports.PowerScriptConcurrency = exports.AsyncUtils = exports.ConfigManager = exports.PowerScriptPatterns = exports.Client = exports.PowerScriptAnalytics = exports.createDatabaseProvider = exports.PowerScriptDatabase = exports.PowerScriptMultimediaProcessor = exports.PowerScriptStreaming = exports.PowerScriptVideoPlayer = exports.PowerScriptAudioPlayer = exports.createMultimediaProvider = exports.PowerScriptGraphics = exports.PowerScriptNetworking = exports.HardwareProvider = exports.GenerationProvider = exports.LocalModelProvider = exports.PowerScriptAIEnhanced = exports.PowerScriptSecurity = exports.PowerScriptML = exports.PowerScriptAI = exports.PowerScriptCompiler = void 0;
+exports.it = exports.describe = exports.testing = exports.PowerScriptTest = exports.testFramework = exports.PowerScript = exports.RAGPresets = exports.RAGUtils = exports.createSemanticSearch = exports.createRAGSystem = exports.SemanticSearch = exports.DocumentChunker = exports.EmbeddingService = exports.MemoryVectorDatabase = exports.VectorDatabase = exports.RAGSystem = exports.Gateway = exports.ServiceDiscovery = exports.LoadBalancer = exports.Middleware = exports.Router = exports.server = exports.PowerScriptServer = exports.PowerScriptCloud = exports.TaskScheduler = exports.WorkerPool = exports.TaskQueue = exports.PowerScriptConcurrency = exports.AsyncUtils = exports.ConfigManager = exports.PowerScriptPatterns = exports.Client = exports.PowerScriptAnalytics = exports.createDatabaseProvider = exports.PowerScriptDatabase = exports.PowerScriptMultimediaProcessor = exports.PowerScriptStreaming = exports.PowerScriptVideoPlayer = exports.PowerScriptAudioPlayer = exports.createMultimediaProvider = exports.PowerScriptGraphics = exports.PowerScriptNetworking = exports.HardwareProvider = exports.GenerationProvider = exports.LocalModelProvider = exports.PowerScriptAIEnhanced = exports.PowerScriptSecurity = exports.PowerScriptML = exports.PowerScriptAI = exports.PowerScriptCompiler = void 0;
+exports.Component = exports.CrossPlatform = exports.HBox = exports.VBox = exports.Input = exports.ProgressBar = exports.List = exports.Box = exports.Text = exports.CLIApp = exports.PowerScriptUI = exports.endTimer = exports.startTimer = exports.captureSnapshot = exports.createMock = exports.assertThrows = exports.assertDeepEquals = exports.assertEquals = exports.assertFalse = exports.assertTrue = exports.afterAll = exports.beforeAll = exports.afterEach = exports.beforeEach = void 0;
 // Core AS3 Classes and Utilities
 __exportStar(require("./core"), exports);
 // Compiler Module
@@ -97,6 +98,8 @@ const testing_1 = require("./testing");
 Object.defineProperty(exports, "testFramework", { enumerable: true, get: function () { return testing_1.testFramework; } });
 // Scaffolding & Code Generation Module (Module 25)
 const scaffolding_1 = require("./scaffolding");
+// UI & Cross-Platform Support Module (Module 23)
+const ui_1 = require("./ui");
 // AI Advanced Module (Module 21)
 var ai_advanced_1 = require("./ai-advanced");
 Object.defineProperty(exports, "RAGSystem", { enumerable: true, get: function () { return ai_advanced_1.RAGSystem; } });
@@ -267,6 +270,16 @@ class PowerScript {
         return instance._scaffolding;
     }
     /**
+     * Get the UI instance
+     */
+    static get ui() {
+        const instance = PowerScript.getInstance();
+        if (!instance._ui) {
+            instance._ui = new ui_1.PowerScriptUI();
+        }
+        return instance._ui;
+    }
+    /**
      * Get PowerScript version
      */
     static get version() {
@@ -283,6 +296,38 @@ class PowerScript {
 exports.PowerScript = PowerScript;
 // Default export
 exports.default = PowerScript;
+// Testing Framework exports
+var testing_2 = require("./testing");
+Object.defineProperty(exports, "PowerScriptTest", { enumerable: true, get: function () { return testing_2.PowerScriptTest; } });
+Object.defineProperty(exports, "testing", { enumerable: true, get: function () { return testing_2.testing; } });
+Object.defineProperty(exports, "describe", { enumerable: true, get: function () { return testing_2.describe; } });
+Object.defineProperty(exports, "it", { enumerable: true, get: function () { return testing_2.it; } });
+Object.defineProperty(exports, "beforeEach", { enumerable: true, get: function () { return testing_2.beforeEach; } });
+Object.defineProperty(exports, "afterEach", { enumerable: true, get: function () { return testing_2.afterEach; } });
+Object.defineProperty(exports, "beforeAll", { enumerable: true, get: function () { return testing_2.beforeAll; } });
+Object.defineProperty(exports, "afterAll", { enumerable: true, get: function () { return testing_2.afterAll; } });
+Object.defineProperty(exports, "assertTrue", { enumerable: true, get: function () { return testing_2.assertTrue; } });
+Object.defineProperty(exports, "assertFalse", { enumerable: true, get: function () { return testing_2.assertFalse; } });
+Object.defineProperty(exports, "assertEquals", { enumerable: true, get: function () { return testing_2.assertEquals; } });
+Object.defineProperty(exports, "assertDeepEquals", { enumerable: true, get: function () { return testing_2.assertDeepEquals; } });
+Object.defineProperty(exports, "assertThrows", { enumerable: true, get: function () { return testing_2.assertThrows; } });
+Object.defineProperty(exports, "createMock", { enumerable: true, get: function () { return testing_2.createMock; } });
+Object.defineProperty(exports, "captureSnapshot", { enumerable: true, get: function () { return testing_2.captureSnapshot; } });
+Object.defineProperty(exports, "startTimer", { enumerable: true, get: function () { return testing_2.startTimer; } });
+Object.defineProperty(exports, "endTimer", { enumerable: true, get: function () { return testing_2.endTimer; } });
+// UI & Cross-Platform Support Module (Module 23)
+var ui_2 = require("./ui");
+Object.defineProperty(exports, "PowerScriptUI", { enumerable: true, get: function () { return ui_2.PowerScriptUI; } });
+Object.defineProperty(exports, "CLIApp", { enumerable: true, get: function () { return ui_2.CLIApp; } });
+Object.defineProperty(exports, "Text", { enumerable: true, get: function () { return ui_2.Text; } });
+Object.defineProperty(exports, "Box", { enumerable: true, get: function () { return ui_2.Box; } });
+Object.defineProperty(exports, "List", { enumerable: true, get: function () { return ui_2.List; } });
+Object.defineProperty(exports, "ProgressBar", { enumerable: true, get: function () { return ui_2.ProgressBar; } });
+Object.defineProperty(exports, "Input", { enumerable: true, get: function () { return ui_2.Input; } });
+Object.defineProperty(exports, "VBox", { enumerable: true, get: function () { return ui_2.VBox; } });
+Object.defineProperty(exports, "HBox", { enumerable: true, get: function () { return ui_2.HBox; } });
+Object.defineProperty(exports, "CrossPlatform", { enumerable: true, get: function () { return ui_2.CrossPlatform; } });
+Object.defineProperty(exports, "Component", { enumerable: true, get: function () { return ui_2.Component; } });
 // Global PowerScript instance (for compatibility)
 if (typeof globalThis !== 'undefined') {
     globalThis.PowerScript = PowerScript;

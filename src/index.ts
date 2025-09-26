@@ -94,6 +94,9 @@ import PowerScriptTest, { testFramework } from './testing';
 // Scaffolding & Code Generation Module (Module 25)
 import { PowerScriptScaffolding } from './scaffolding';
 
+// UI & Cross-Platform Support Module (Module 23)
+import { PowerScriptUI } from './ui';
+
 // AI Advanced Module (Module 21)
 export { 
   RAGSystem,
@@ -152,6 +155,7 @@ export class PowerScript {
   private _cloud?: PowerScriptCloud;
   private _testing?: PowerScriptTest;
   private _scaffolding?: PowerScriptScaffolding;
+  private _ui?: PowerScriptUI;
 
   private constructor() {
     this._core = new PowerScriptCore();
@@ -310,6 +314,17 @@ export class PowerScript {
   }
 
   /**
+   * Get the UI instance
+   */
+  public static get ui(): PowerScriptUI {
+    const instance = PowerScript.getInstance();
+    if (!instance._ui) {
+      instance._ui = new PowerScriptUI();
+    }
+    return instance._ui;
+  }
+
+  /**
    * Get PowerScript version
    */
   public static get version(): string {
@@ -330,6 +345,42 @@ export default PowerScript;
 
 // Additional exports
 export { testFramework };
+
+// Testing Framework exports
+export { 
+  PowerScriptTest,
+  testing,
+  describe,
+  it,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+  assertTrue,
+  assertFalse,
+  assertEquals,
+  assertDeepEquals,
+  assertThrows,
+  createMock,
+  captureSnapshot,
+  startTimer,
+  endTimer
+} from './testing';
+
+// UI & Cross-Platform Support Module (Module 23)
+export {
+  PowerScriptUI,
+  CLIApp,
+  Text,
+  Box,
+  List,
+  ProgressBar,
+  Input,
+  VBox,
+  HBox,
+  CrossPlatform,
+  Component
+} from './ui';
 
 // Global PowerScript instance (for compatibility)
 if (typeof globalThis !== 'undefined') {
