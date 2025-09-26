@@ -1,0 +1,420 @@
+/**
+ * Vue EIPS Integration Tests
+ * 
+ * Test suite for Vue 3 composables integration with EIPS client framework
+ */
+
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+
+// Mock Vue 3 functions
+const mockRef = jest.fn((value: any) => ({ value }));
+const mockReactive = jest.fn((obj: any) => obj);
+const mockComputed = jest.fn((fn: Function) => ({ value: fn() }));
+const mockOnMounted = jest.fn();
+const mockOnUnmounted = jest.fn();
+const mockWatch = jest.fn();
+
+// Mock Vue 3 module before importing composables
+jest.mock('vue', () => ({
+  ref: mockRef,
+  reactive: mockReactive,
+  onMounted: mockOnMounted,
+  onUnmounted: mockOnUnmounted,
+  watch: mockWatch,
+  computed: mockComputed
+}));
+
+// Mock EIPS client framework
+const mockCanvasManager = {
+  getStage: jest.fn(() => ({ addChild: jest.fn(), removeChild: jest.fn() })),
+  resize: jest.fn(),
+  startRendering: jest.fn(),
+  stopRendering: jest.fn(),
+  destroy: jest.fn()
+};
+
+const mockMediaManager = {
+  createAudioPlayer: jest.fn(async () => ({
+    load: jest.fn(),
+    play: jest.fn(),
+    pause: jest.fn(),
+    stop: jest.fn(),
+    setVolume: jest.fn(),
+    addEventListener: jest.fn(),
+    currentTime: 0,
+    duration: 0
+  })),
+  createVideoPlayer: jest.fn(async () => ({
+    load: jest.fn(),
+    play: jest.fn(),
+    pause: jest.fn(),
+    stop: jest.fn(),
+    setVolume: jest.fn(),
+    addEventListener: jest.fn(),
+    currentTime: 0,
+    duration: 0
+  })),
+  destroy: jest.fn()
+};
+
+const mockGameManager = {
+  start: jest.fn(),
+  stop: jest.fn(),
+  addGameObject: jest.fn(),
+  removeGameObject: jest.fn(),
+  isKeyPressed: jest.fn(() => false),
+  destroy: jest.fn()
+};
+
+const mockSprite = {
+  x: 0,
+  y: 0,
+  graphics: {
+    beginFill: jest.fn(),
+    drawRect: jest.fn(),
+    drawCircle: jest.fn(),
+    endFill: jest.fn(),
+    clear: jest.fn()
+  }
+};
+
+jest.mock('../src/client/index', () => ({
+  CanvasManager: jest.fn(() => mockCanvasManager),
+  MediaManager: jest.fn(() => mockMediaManager),
+  GameManager: jest.fn(() => mockGameManager),
+  createSprite: jest.fn(async () => mockSprite)
+}));
+
+// Import composables after mocking
+import {
+  useStage,
+  useSprite,
+  useGraphics,
+  useAudioPlayer,
+  useVideoPlayer,
+  useGame,
+  useAnimation,
+  useKeyboard,
+  useMouse
+} from '../src/client/vue';
+
+describe('Vue EIPS Integration Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('useStage composable', () => {
+    it('should create stage composable with correct properties', () => {
+      const stage = useStage(800, 600);
+      
+      expect(stage).toHaveProperty('canvasRef');
+      expect(stage).toHaveProperty('stage');
+      expect(stage).toHaveProperty('canvasManager');
+      expect(stage).toHaveProperty('startRendering');
+      expect(stage).toHaveProperty('stopRendering');
+      expect(stage).toHaveProperty('isReady');
+      
+      expect(mockRef).toHaveBeenCalledWith(null); // canvasRef
+      expect(mockRef).toHaveBeenCalledWith(null); // canvasManager
+      expect(mockRef).toHaveBeenCalledWith(null); // stage
+      expect(mockRef).toHaveBeenCalledWith(false); // isReady
+    });
+
+    it('should setup onMounted and onUnmounted hooks', () => {
+      useStage();
+      
+      expect(mockOnMounted).toHaveBeenCalled();
+      expect(mockOnUnmounted).toHaveBeenCalled();
+    });
+
+    it('should setup watch for width and height changes', () => {
+      useStage(800, 600);
+      
+      expect(mockWatch).toHaveBeenCalled();
+    });
+
+    it('should provide startRendering and stopRendering functions', () => {
+      const stage = useStage();
+      
+      expect(typeof stage.startRendering).toBe('function');
+      expect(typeof stage.stopRendering).toBe('function');
+    });
+  });
+
+  describe('useSprite composable', () => {
+    it('should create sprite composable with correct properties', () => {
+      const sprite = useSprite();
+      
+      expect(sprite).toHaveProperty('sprite');
+      expect(sprite).toHaveProperty('addToStage');
+      expect(sprite).toHaveProperty('removeFromStage');
+      expect(sprite).toHaveProperty('isReady');
+      
+      expect(mockRef).toHaveBeenCalledWith(null); // sprite
+      expect(mockRef).toHaveBeenCalledWith(false); // isReady
+    });
+
+    it('should setup onMounted hook for sprite creation', () => {
+      useSprite();
+      
+      expect(mockOnMounted).toHaveBeenCalled();
+    });
+
+    it('should provide stage management functions', () => {
+      const sprite = useSprite();
+      
+      expect(typeof sprite.addToStage).toBe('function');
+      expect(typeof sprite.removeFromStage).toBe('function');
+    });
+  });
+
+  describe('useGraphics composable', () => {
+    it('should create graphics composable with drawing functions', () => {
+      const mockSpriteRef = mockRef(mockSprite);
+      const graphics = useGraphics(mockSpriteRef as any);
+      
+      expect(graphics).toHaveProperty('graphics');
+      expect(graphics).toHaveProperty('drawRect');
+      expect(graphics).toHaveProperty('drawCircle');
+      expect(graphics).toHaveProperty('clear');
+      expect(graphics).toHaveProperty('isReady');
+      
+      expect(mockComputed).toHaveBeenCalled();
+    });
+
+    it('should provide drawing functions', () => {
+      const mockSpriteRef = mockRef(mockSprite);
+      const graphics = useGraphics(mockSpriteRef as any);
+      
+      expect(typeof graphics.drawRect).toBe('function');
+      expect(typeof graphics.drawCircle).toBe('function');
+      expect(typeof graphics.clear).toBe('function');
+    });
+  });
+
+  describe('useAudioPlayer composable', () => {
+    it('should create audio player composable with media controls', () => {
+      const audioPlayer = useAudioPlayer();
+      
+      expect(audioPlayer).toHaveProperty('loadAudio');
+      expect(audioPlayer).toHaveProperty('play');
+      expect(audioPlayer).toHaveProperty('pause');
+      expect(audioPlayer).toHaveProperty('stop');
+      expect(audioPlayer).toHaveProperty('setVolume');
+      expect(audioPlayer).toHaveProperty('isLoading');
+      expect(audioPlayer).toHaveProperty('isPlaying');
+      expect(audioPlayer).toHaveProperty('currentTime');
+      expect(audioPlayer).toHaveProperty('duration');
+      expect(audioPlayer).toHaveProperty('isReady');
+      
+      expect(mockRef).toHaveBeenCalledWith(null); // audioPlayer
+      expect(mockRef).toHaveBeenCalledWith(false); // isLoading
+      expect(mockRef).toHaveBeenCalledWith(false); // isPlaying
+      expect(mockRef).toHaveBeenCalledWith(0); // currentTime
+      expect(mockRef).toHaveBeenCalledWith(0); // duration
+      expect(mockRef).toHaveBeenCalledWith(false); // isReady
+    });
+
+    it('should setup onUnmounted hook for cleanup', () => {
+      useAudioPlayer();
+      
+      expect(mockOnUnmounted).toHaveBeenCalled();
+    });
+
+    it('should provide media control functions', () => {
+      const audioPlayer = useAudioPlayer();
+      
+      expect(typeof audioPlayer.loadAudio).toBe('function');
+      expect(typeof audioPlayer.play).toBe('function');
+      expect(typeof audioPlayer.pause).toBe('function');
+      expect(typeof audioPlayer.stop).toBe('function');
+      expect(typeof audioPlayer.setVolume).toBe('function');
+    });
+  });
+
+  describe('useVideoPlayer composable', () => {
+    it('should create video player composable with media controls', () => {
+      const videoPlayer = useVideoPlayer();
+      
+      expect(videoPlayer).toHaveProperty('loadVideo');
+      expect(videoPlayer).toHaveProperty('play');
+      expect(videoPlayer).toHaveProperty('pause');
+      expect(videoPlayer).toHaveProperty('stop');
+      expect(videoPlayer).toHaveProperty('setVolume');
+      expect(videoPlayer).toHaveProperty('isLoading');
+      expect(videoPlayer).toHaveProperty('isPlaying');
+      expect(videoPlayer).toHaveProperty('currentTime');
+      expect(videoPlayer).toHaveProperty('duration');
+      expect(videoPlayer).toHaveProperty('isReady');
+    });
+
+    it('should provide video control functions', () => {
+      const videoPlayer = useVideoPlayer();
+      
+      expect(typeof videoPlayer.loadVideo).toBe('function');
+      expect(typeof videoPlayer.play).toBe('function');
+      expect(typeof videoPlayer.pause).toBe('function');
+      expect(typeof videoPlayer.stop).toBe('function');
+      expect(typeof videoPlayer.setVolume).toBe('function');
+    });
+  });
+
+  describe('useGame composable', () => {
+    it('should create game composable with game loop controls', () => {
+      const game = useGame(800, 600);
+      
+      expect(game).toHaveProperty('canvasRef');
+      expect(game).toHaveProperty('gameManager');
+      expect(game).toHaveProperty('startGame');
+      expect(game).toHaveProperty('stopGame');
+      expect(game).toHaveProperty('addGameObject');
+      expect(game).toHaveProperty('removeGameObject');
+      expect(game).toHaveProperty('isKeyPressed');
+      expect(game).toHaveProperty('isRunning');
+      expect(game).toHaveProperty('isReady');
+    });
+
+    it('should provide game management functions', () => {
+      const game = useGame();
+      
+      expect(typeof game.startGame).toBe('function');
+      expect(typeof game.stopGame).toBe('function');
+      expect(typeof game.addGameObject).toBe('function');
+      expect(typeof game.removeGameObject).toBe('function');
+      expect(typeof game.isKeyPressed).toBe('function');
+    });
+  });
+
+  describe('useAnimation composable', () => {
+    it('should create animation composable with animation controls', () => {
+      const animation = useAnimation();
+      
+      expect(animation).toHaveProperty('animate');
+      expect(animation).toHaveProperty('stopAnimation');
+      expect(animation).toHaveProperty('stopAllAnimations');
+      expect(animation).toHaveProperty('activeAnimations');
+      
+      expect(mockReactive).toHaveBeenCalled();
+      expect(mockComputed).toHaveBeenCalled();
+    });
+
+    it('should provide animation functions', () => {
+      const animation = useAnimation();
+      
+      expect(typeof animation.animate).toBe('function');
+      expect(typeof animation.stopAnimation).toBe('function');
+      expect(typeof animation.stopAllAnimations).toBe('function');
+    });
+  });
+
+  describe('useKeyboard composable', () => {
+    it('should create keyboard composable with input handling', () => {
+      const keyboard = useKeyboard();
+      
+      expect(keyboard).toHaveProperty('keys');
+      expect(keyboard).toHaveProperty('isKeyPressed');
+      
+      expect(mockReactive).toHaveBeenCalled();
+    });
+
+    it('should setup onMounted hook for event listeners', () => {
+      useKeyboard();
+      
+      expect(mockOnMounted).toHaveBeenCalled();
+    });
+
+    it('should provide key checking function', () => {
+      const keyboard = useKeyboard();
+      
+      expect(typeof keyboard.isKeyPressed).toBe('function');
+    });
+  });
+
+  describe('useMouse composable', () => {
+    it('should create mouse composable with mouse state', () => {
+      const mouse = useMouse();
+      
+      expect(mouse).toHaveProperty('x');
+      expect(mouse).toHaveProperty('y');
+      expect(mouse).toHaveProperty('isDown');
+      expect(mouse).toHaveProperty('button');
+      
+      expect(mockReactive).toHaveBeenCalled();
+    });
+
+    it('should setup onMounted hook for mouse event listeners', () => {
+      useMouse();
+      
+      expect(mockOnMounted).toHaveBeenCalled();
+    });
+
+    it('should handle element reference parameter', () => {
+      const mockElementRef = mockRef(document.createElement('div'));
+      const mouse = useMouse(mockElementRef as any);
+      
+      expect(mouse).toHaveProperty('x');
+      expect(mouse).toHaveProperty('y');
+    });
+  });
+});
+
+describe('Vue EIPS Integration - Functional Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should export all composables in EIPSVueComposables object', async () => {
+    const { EIPSVueComposables } = await import('../src/client/vue');
+    
+    expect(EIPSVueComposables).toHaveProperty('useStage');
+    expect(EIPSVueComposables).toHaveProperty('useSprite');
+    expect(EIPSVueComposables).toHaveProperty('useGraphics');
+    expect(EIPSVueComposables).toHaveProperty('useAudioPlayer');
+    expect(EIPSVueComposables).toHaveProperty('useVideoPlayer');
+    expect(EIPSVueComposables).toHaveProperty('useGame');
+    expect(EIPSVueComposables).toHaveProperty('useAnimation');
+    expect(EIPSVueComposables).toHaveProperty('useKeyboard');
+    expect(EIPSVueComposables).toHaveProperty('useMouse');
+  });
+
+  it('should have default export with all composables', async () => {
+    const defaultExport = (await import('../src/client/vue')).default;
+    
+    expect(defaultExport).toHaveProperty('useStage');
+    expect(defaultExport).toHaveProperty('useSprite');
+    expect(defaultExport).toHaveProperty('useGraphics');
+    expect(defaultExport).toHaveProperty('useAudioPlayer');
+    expect(defaultExport).toHaveProperty('useVideoPlayer');
+    expect(defaultExport).toHaveProperty('useGame');
+    expect(defaultExport).toHaveProperty('useAnimation');
+    expect(defaultExport).toHaveProperty('useKeyboard');
+    expect(defaultExport).toHaveProperty('useMouse');
+  });
+
+  it('should handle async operations in composables', async () => {
+    const sprite = useSprite();
+    
+    // Test that async operations are handled properly
+    expect(mockOnMounted).toHaveBeenCalled();
+    
+    // Simulate onMounted callback execution
+    const onMountedCallback = mockOnMounted.mock.calls[0][0];
+    if (typeof onMountedCallback === 'function') {
+      await onMountedCallback();
+    }
+  });
+
+  it('should handle error cases gracefully', () => {
+    // Test error handling in various composables
+    const audioPlayer = useAudioPlayer();
+    const videoPlayer = useVideoPlayer();
+    const game = useGame();
+    
+    // These should not throw errors even with mock implementations
+    expect(() => {
+      audioPlayer.play();
+      videoPlayer.pause();
+      game.startGame();
+    }).not.toThrow();
+  });
+});

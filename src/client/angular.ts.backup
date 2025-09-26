@@ -1,0 +1,820 @@
+/**
+ * EIPS Angular Services
+ * 
+ * Angular services for AS3-style game development and multimedia
+ * Using PowerScript client-side modules with Angular's dependency injection
+ */
+
+import { Injectable, OnDestroy, NgZone } from '@angular/core';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { CanvasManager, MediaManager, GameManager } from './index';
+
+// ============================================================================
+// TYPES FOR ANGULAR INTEGRATION
+// ============================================================================
+
+interface MouseState {
+  x: number;
+  y: number;
+  isDown: boolean;
+  button: number;
+}
+
+interface GameState {
+  isRunning: boolean;
+  frameRate: number;
+  gameObjects: any[];
+}
+
+interface MediaState {
+  isLoading: boolean;
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  volume: number;
+}
+
+// ============================================================================
+// CANVAS & GRAPHICS SERVICE
+// ============================================================================
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CanvasService implements OnDestroy {
+  private canvasManager: CanvasManager | null = null;
+  private stage: any = null;
+  
+  private readonly _isReady$ = new BehaviorSubject<boolean>(false);
+  private readonly _stage$ = new BehaviorSubject<any>(null);
+  private readonly _renderStats$ = new BehaviorSubject<any>(null);
+  
+  public readonly isReady$: Observable<boolean> = this._isReady$.asObservable();
+  public readonly stage$: Observable<any> = this._stage$.asObservable();
+  public readonly renderStats$: Observable<any> = this._renderStats$.asObservable();
+  
+  constructor(private ngZone: NgZone) {}
+  
+  /**
+   * Initialize canvas with given element
+   */
+  initializeCanvas(canvas: HTMLCanvasElement, width: number = 800, height: number = 600): void {
+    this.ngZone.runOutsideAngular(() => {
+      this.canvasManager = new CanvasManager(canvas);
+      
+      // Wait for stage to be ready
+      const checkStage = () => {
+        const stageInstance = this.canvasManager!.getStage();
+        if (stageInstance) {
+          this.stage = stageInstance;
+          this.ngZone.run(() => {
+            this._stage$.next(stageInstance);
+            this._isReady$.next(true);
+          });
+        } else {
+          setTimeout(checkStage, 10);
+        }
+      };
+      checkStage();
+      
+      this.canvasManager.resize(width, height);
+    });
+  }
+  
+  /**
+   * Start rendering loop
+   */
+  startRendering(): void {
+    if (this.canvasManager) {
+      this.canvasManager.startRendering();
+    }
+  }
+  
+  /**
+   * Stop rendering loop
+   */
+  stopRendering(): void {
+    if (this.canvasManager) {
+      this.canvasManager.stopRendering();
+    }
+  }
+  
+  /**
+   * Resize canvas
+   */
+  resize(width: number, height: number): void {
+    if (this.canvasManager) {
+      this.canvasManager.resize(width, height);
+    }
+  }
+  
+  /**
+   * Get current stage
+   */
+  getStage(): any {
+    return this.stage;
+  }
+  
+  /**
+   * Create a new sprite
+   */
+  async createSprite(): Promise<any> {
+    try {
+      const { createSprite } = await import('./index');
+      return await createSprite();
+    } catch (error) {
+      console.error('Failed to create sprite:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Add child to stage
+   */
+  addToStage(child: any): void {
+    if (this.stage && child) {
+      this.stage.addChild(child);
+    }
+  }
+  
+  /**
+   * Remove child from stage
+   */
+  removeFromStage(child: any): void {
+    if (this.stage && child) {
+      this.stage.removeChild(child);
+    }
+  }
+  
+  ngOnDestroy(): void {
+    if (this.canvasManager) {
+      this.canvasManager.destroy();
+    }
+    this._isReady$.complete();
+    this._stage$.complete();
+    this._renderStats$.complete();
+  }
+}
+
+// ============================================================================
+// MEDIA SERVICE
+// ============================================================================
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MediaService implements OnDestroy {
+  private mediaManager: MediaManager;
+  private audioPlayers: Map<string, any> = new Map();
+  private videoPlayers: Map<string, any> = new Map();
+  
+  private readonly _audioState$ = new BehaviorSubject<{ [key: string]: MediaState }>({});
+  private readonly _videoState$ = new BehaviorSubject<{ [key: string]: MediaState }>({});
+  
+  public readonly audioState$: Observable<{ [key: string]: MediaState }> = this._audioState$.asObservable();
+  public readonly videoState$: Observable<{ [key: string]: MediaState }> = this._videoState$.asObservable();
+  
+  constructor(private ngZone: NgZone) {
+    this.mediaManager = new MediaManager();
+  }
+  
+  /**
+   * Create audio player
+   */
+  async createAudioPlayer(playerId: string, config?: any): Promise<void> {
+    try {
+      const player = await this.mediaManager.createAudioPlayer(config);
+      this.audioPlayers.set(playerId, player);
+      
+      // Initialize state
+      this.updateAudioState(playerId, {
+        isLoading: false,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        volume: 1
+      });
+      
+      // Set up event listeners
+      player.addEventListener('play', () => {
+        this.updateAudioState(playerId, { isPlaying: true });
+      });
+      
+      player.addEventListener('pause', () => {
+        this.updateAudioState(playerId, { isPlaying: false });
+      });
+      
+      player.addEventListener('ended', () => {
+        this.updateAudioState(playerId, { isPlaying: false });
+      });
+      
+      player.addEventListener('timeupdate', () => {
+        this.updateAudioState(playerId, {
+          currentTime: player.currentTime || 0,
+          duration: player.duration || 0
+        });
+      });
+      
+    } catch (error) {
+      console.error('Failed to create audio player:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Load audio file
+   */
+  async loadAudio(playerId: string, url: string): Promise<void> {
+    const player = this.audioPlayers.get(playerId);
+    if (!player) {
+      throw new Error(`Audio player ${playerId} not found`);
+    }
+    
+    this.updateAudioState(playerId, { isLoading: true });
+    try {
+      await player.load(url);
+    } catch (error) {
+      console.error('Failed to load audio:', error);
+      throw error;
+    } finally {
+      this.updateAudioState(playerId, { isLoading: false });
+    }
+  }
+  
+  /**
+   * Play audio
+   */
+  async playAudio(playerId: string): Promise<void> {
+    const player = this.audioPlayers.get(playerId);
+    if (player) {
+      await player.play();
+    }
+  }
+  
+  /**
+   * Pause audio
+   */
+  pauseAudio(playerId: string): void {
+    const player = this.audioPlayers.get(playerId);
+    if (player) {
+      player.pause();
+    }
+  }
+  
+  /**
+   * Stop audio
+   */
+  stopAudio(playerId: string): void {
+    const player = this.audioPlayers.get(playerId);
+    if (player) {
+      player.stop();
+    }
+  }
+  
+  /**
+   * Set audio volume
+   */
+  setAudioVolume(playerId: string, volume: number): void {
+    const player = this.audioPlayers.get(playerId);
+    if (player) {
+      player.setVolume(volume);
+      this.updateAudioState(playerId, { volume });
+    }
+  }
+  
+  /**
+   * Create video player
+   */
+  async createVideoPlayer(playerId: string, config?: any): Promise<void> {
+    try {
+      const player = await this.mediaManager.createVideoPlayer(config);
+      this.videoPlayers.set(playerId, player);
+      
+      // Initialize state
+      this.updateVideoState(playerId, {
+        isLoading: false,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        volume: 1
+      });
+      
+      // Set up event listeners
+      player.addEventListener('play', () => {
+        this.updateVideoState(playerId, { isPlaying: true });
+      });
+      
+      player.addEventListener('pause', () => {
+        this.updateVideoState(playerId, { isPlaying: false });
+      });
+      
+      player.addEventListener('ended', () => {
+        this.updateVideoState(playerId, { isPlaying: false });
+      });
+      
+      player.addEventListener('timeupdate', () => {
+        this.updateVideoState(playerId, {
+          currentTime: player.currentTime || 0,
+          duration: player.duration || 0
+        });
+      });
+      
+    } catch (error) {
+      console.error('Failed to create video player:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Load video file
+   */
+  async loadVideo(playerId: string, url: string): Promise<void> {
+    const player = this.videoPlayers.get(playerId);
+    if (!player) {
+      throw new Error(`Video player ${playerId} not found`);
+    }
+    
+    this.updateVideoState(playerId, { isLoading: true });
+    try {
+      await player.load(url);
+    } catch (error) {
+      console.error('Failed to load video:', error);
+      throw error;
+    } finally {
+      this.updateVideoState(playerId, { isLoading: false });
+    }
+  }
+  
+  /**
+   * Play video
+   */
+  async playVideo(playerId: string): Promise<void> {
+    const player = this.videoPlayers.get(playerId);
+    if (player) {
+      await player.play();
+    }
+  }
+  
+  /**
+   * Pause video
+   */
+  pauseVideo(playerId: string): void {
+    const player = this.videoPlayers.get(playerId);
+    if (player) {
+      player.pause();
+    }
+  }
+  
+  /**
+   * Stop video
+   */
+  stopVideo(playerId: string): void {
+    const player = this.videoPlayers.get(playerId);
+    if (player) {
+      player.stop();
+    }
+  }
+  
+  /**
+   * Set video volume
+   */
+  setVideoVolume(playerId: string, volume: number): void {
+    const player = this.videoPlayers.get(playerId);
+    if (player) {
+      player.setVolume(volume);
+      this.updateVideoState(playerId, { volume });
+    }
+  }
+  
+  private updateAudioState(playerId: string, updates: Partial<MediaState>): void {
+    this.ngZone.run(() => {
+      const currentState = this._audioState$.value;
+      const playerState = currentState[playerId] || {
+        isLoading: false,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        volume: 1
+      };
+      
+      this._audioState$.next({
+        ...currentState,
+        [playerId]: { ...playerState, ...updates }
+      });
+    });
+  }
+  
+  private updateVideoState(playerId: string, updates: Partial<MediaState>): void {
+    this.ngZone.run(() => {
+      const currentState = this._videoState$.value;
+      const playerState = currentState[playerId] || {
+        isLoading: false,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        volume: 1
+      };
+      
+      this._videoState$.next({
+        ...currentState,
+        [playerId]: { ...playerState, ...updates }
+      });
+    });
+  }
+  
+  ngOnDestroy(): void {
+    if (this.mediaManager) {
+      this.mediaManager.destroy();
+    }
+    this._audioState$.complete();
+    this._videoState$.complete();
+  }
+}
+
+// ============================================================================
+// GAME SERVICE
+// ============================================================================
+
+@Injectable({
+  providedIn: 'root'
+})
+export class GameService implements OnDestroy {
+  private gameManager: GameManager | null = null;
+  
+  private readonly _gameState$ = new BehaviorSubject<GameState>({
+    isRunning: false,
+    frameRate: 60,
+    gameObjects: []
+  });
+  
+  private readonly _keyboardState$ = new BehaviorSubject<{ [key: string]: boolean }>({});
+  private readonly _mouseState$ = new BehaviorSubject<MouseState>({
+    x: 0,
+    y: 0,
+    isDown: false,
+    button: -1
+  });
+  
+  public readonly gameState$: Observable<GameState> = this._gameState$.asObservable();
+  public readonly keyboardState$: Observable<{ [key: string]: boolean }> = this._keyboardState$.asObservable();
+  public readonly mouseState$: Observable<MouseState> = this._mouseState$.asObservable();
+  
+  constructor(private ngZone: NgZone) {
+    this.setupInputListeners();
+  }
+  
+  /**
+   * Initialize game with canvas
+   */
+  initializeGame(canvas: HTMLCanvasElement): void {
+    this.ngZone.runOutsideAngular(() => {
+      this.gameManager = new GameManager(canvas);
+    });
+  }
+  
+  /**
+   * Start game loop
+   */
+  startGame(): void {
+    if (this.gameManager) {
+      this.gameManager.start();
+      this.updateGameState({ isRunning: true });
+    }
+  }
+  
+  /**
+   * Stop game loop
+   */
+  stopGame(): void {
+    if (this.gameManager) {
+      this.gameManager.stop();
+      this.updateGameState({ isRunning: false });
+    }
+  }
+  
+  /**
+   * Add game object
+   */
+  addGameObject(gameObject: any): void {
+    if (this.gameManager) {
+      this.gameManager.addGameObject(gameObject);
+      const currentState = this._gameState$.value;
+      this.updateGameState({
+        gameObjects: [...currentState.gameObjects, gameObject]
+      });
+    }
+  }
+  
+  /**
+   * Remove game object
+   */
+  removeGameObject(gameObject: any): void {
+    if (this.gameManager) {
+      this.gameManager.removeGameObject(gameObject);
+      const currentState = this._gameState$.value;
+      this.updateGameState({
+        gameObjects: currentState.gameObjects.filter(obj => obj !== gameObject)
+      });
+    }
+  }
+  
+  /**
+   * Check if key is pressed
+   */
+  isKeyPressed(keyCode: string): boolean {
+    if (this.gameManager) {
+      return this.gameManager.isKeyPressed(keyCode);
+    }
+    return this._keyboardState$.value[keyCode] || false;
+  }
+  
+  /**
+   * Get current game manager
+   */
+  getGameManager(): GameManager | null {
+    return this.gameManager;
+  }
+  
+  private setupInputListeners(): void {
+    // Keyboard listeners
+    const handleKeyDown = (e: KeyboardEvent) => {
+      this.ngZone.run(() => {
+        const currentKeys = this._keyboardState$.value;
+        this._keyboardState$.next({
+          ...currentKeys,
+          [e.code]: true
+        });
+      });
+    };
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      this.ngZone.run(() => {
+        const currentKeys = this._keyboardState$.value;
+        this._keyboardState$.next({
+          ...currentKeys,
+          [e.code]: false
+        });
+      });
+    };
+    
+    // Mouse listeners
+    const handleMouseMove = (e: MouseEvent) => {
+      this.ngZone.run(() => {
+        const currentMouse = this._mouseState$.value;
+        this._mouseState$.next({
+          ...currentMouse,
+          x: e.clientX,
+          y: e.clientY
+        });
+      });
+    };
+    
+    const handleMouseDown = (e: MouseEvent) => {
+      this.ngZone.run(() => {
+        const currentMouse = this._mouseState$.value;
+        this._mouseState$.next({
+          ...currentMouse,
+          isDown: true,
+          button: e.button
+        });
+      });
+    };
+    
+    const handleMouseUp = (e: MouseEvent) => {
+      this.ngZone.run(() => {
+        const currentMouse = this._mouseState$.value;
+        this._mouseState$.next({
+          ...currentMouse,
+          isDown: false,
+          button: -1
+        });
+      });
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
+  }
+  
+  private updateGameState(updates: Partial<GameState>): void {
+    this.ngZone.run(() => {
+      const currentState = this._gameState$.value;
+      this._gameState$.next({ ...currentState, ...updates });
+    });
+  }
+  
+  ngOnDestroy(): void {
+    if (this.gameManager) {
+      this.gameManager.destroy();
+    }
+    this._gameState$.complete();
+    this._keyboardState$.complete();
+    this._mouseState$.complete();
+  }
+}
+
+// ============================================================================
+// GRAPHICS SERVICE
+// ============================================================================
+
+@Injectable({
+  providedIn: 'root'
+})
+export class GraphicsService {
+  
+  constructor() {}
+  
+  /**
+   * Draw rectangle on graphics object
+   */
+  drawRect(graphics: any, x: number, y: number, width: number, height: number, color: number = 0xFF0000): void {
+    if (graphics) {
+      graphics.beginFill(color);
+      graphics.drawRect(x, y, width, height);
+      graphics.endFill();
+    }
+  }
+  
+  /**
+   * Draw circle on graphics object
+   */
+  drawCircle(graphics: any, x: number, y: number, radius: number, color: number = 0xFF0000): void {
+    if (graphics) {
+      graphics.beginFill(color);
+      graphics.drawCircle(x, y, radius);
+      graphics.endFill();
+    }
+  }
+  
+  /**
+   * Draw line on graphics object
+   */
+  drawLine(graphics: any, x1: number, y1: number, x2: number, y2: number, thickness: number = 1, color: number = 0x000000): void {
+    if (graphics) {
+      graphics.lineStyle(thickness, color);
+      graphics.moveTo(x1, y1);
+      graphics.lineTo(x2, y2);
+    }
+  }
+  
+  /**
+   * Clear graphics object
+   */
+  clear(graphics: any): void {
+    if (graphics) {
+      graphics.clear();
+    }
+  }
+  
+  /**
+   * Begin fill on graphics object
+   */
+  beginFill(graphics: any, color: number, alpha: number = 1): void {
+    if (graphics) {
+      graphics.beginFill(color, alpha);
+    }
+  }
+  
+  /**
+   * End fill on graphics object
+   */
+  endFill(graphics: any): void {
+    if (graphics) {
+      graphics.endFill();
+    }
+  }
+  
+  /**
+   * Set line style on graphics object
+   */
+  lineStyle(graphics: any, thickness: number, color: number = 0x000000, alpha: number = 1): void {
+    if (graphics) {
+      graphics.lineStyle(thickness, color, alpha);
+    }
+  }
+}
+
+// ============================================================================
+// ANIMATION SERVICE
+// ============================================================================
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AnimationService implements OnDestroy {
+  private animations: Map<string, any> = new Map();
+  private readonly _activeAnimations$ = new BehaviorSubject<number>(0);
+  
+  public readonly activeAnimations$: Observable<number> = this._activeAnimations$.asObservable();
+  
+  constructor(private ngZone: NgZone) {}
+  
+  /**
+   * Animate object properties
+   */
+  animate(
+    target: any,
+    properties: { [key: string]: number },
+    duration: number = 1000,
+    easing: string = 'linear'
+  ): Observable<string> {
+    return new Observable(observer => {
+      const animationId = Math.random().toString(36).substr(2, 9);
+      const startTime = Date.now();
+      const startValues: { [key: string]: number } = {};
+      
+      // Store initial values
+      Object.keys(properties).forEach(prop => {
+        startValues[prop] = target[prop] || 0;
+      });
+      
+      const animateFrame = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Apply easing (simple linear for now)
+        const easedProgress = progress;
+        
+        // Update properties
+        Object.keys(properties).forEach(prop => {
+          const startValue = startValues[prop];
+          const endValue = properties[prop];
+          target[prop] = startValue + (endValue - startValue) * easedProgress;
+        });
+        
+        if (progress < 1) {
+          requestAnimationFrame(animateFrame);
+        } else {
+          this.animations.delete(animationId);
+          this.updateActiveAnimationsCount();
+          observer.next(animationId);
+          observer.complete();
+        }
+      };
+      
+      this.animations.set(animationId, { target, properties, duration, easing });
+      this.updateActiveAnimationsCount();
+      requestAnimationFrame(animateFrame);
+      
+      return () => {
+        this.stopAnimation(animationId);
+      };
+    });
+  }
+  
+  /**
+   * Stop specific animation
+   */
+  stopAnimation(animationId: string): void {
+    this.animations.delete(animationId);
+    this.updateActiveAnimationsCount();
+  }
+  
+  /**
+   * Stop all animations
+   */
+  stopAllAnimations(): void {
+    this.animations.clear();
+    this.updateActiveAnimationsCount();
+  }
+  
+  /**
+   * Get number of active animations
+   */
+  getActiveAnimationsCount(): number {
+    return this.animations.size;
+  }
+  
+  private updateActiveAnimationsCount(): void {
+    this.ngZone.run(() => {
+      this._activeAnimations$.next(this.animations.size);
+    });
+  }
+  
+  ngOnDestroy(): void {
+    this.stopAllAnimations();
+    this._activeAnimations$.complete();
+  }
+}
+
+// ============================================================================
+// EXPORT ALL SERVICES
+// ============================================================================
+
+export const EIPSAngularServices = {
+  CanvasService,
+  MediaService,
+  GameService,
+  GraphicsService,
+  AnimationService
+};
+
+export {
+  CanvasService,
+  MediaService,
+  GameService,
+  GraphicsService,
+  AnimationService
+};

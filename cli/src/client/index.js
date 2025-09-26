@@ -95,7 +95,16 @@ class MediaManager {
         }
     }
     createAudioPlayer(src) {
-        const audio = new Audio(src);
+        const audio = typeof Audio !== 'undefined' ? new Audio(src) : {
+            src,
+            play: () => Promise.resolve(),
+            pause: () => { },
+            currentTime: 0,
+            duration: 0,
+            volume: 1,
+            addEventListener: () => { },
+            removeEventListener: () => { }
+        };
         return {
             element: audio,
             play: () => audio.play(),
@@ -121,8 +130,21 @@ class MediaManager {
         };
     }
     createVideoPlayer(src) {
-        const video = document.createElement('video');
-        video.src = src;
+        const video = typeof document !== 'undefined' ? document.createElement('video') : {
+            src,
+            play: () => Promise.resolve(),
+            pause: () => { },
+            currentTime: 0,
+            duration: 0,
+            volume: 1,
+            width: 320,
+            height: 240,
+            addEventListener: () => { },
+            removeEventListener: () => { }
+        };
+        if (typeof document !== 'undefined') {
+            video.src = src;
+        }
         return {
             element: video,
             play: () => video.play(),
@@ -178,7 +200,7 @@ class GameManager {
         this.gameLoop = () => {
             if (!this.running)
                 return;
-            const currentTime = performance.now();
+            const currentTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
             this.deltaTime = (currentTime - this.lastTime) / 1000;
             this.lastTime = currentTime;
             if (!this.paused) {
@@ -192,7 +214,7 @@ class GameManager {
                     }
                 }
             }
-            this.animationId = requestAnimationFrame(this.gameLoop);
+            this.animationId = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame(this.gameLoop) : setTimeout(this.gameLoop, 16);
         };
         this.setupInputHandlers();
     }
@@ -226,14 +248,19 @@ class GameManager {
             return;
         this.running = true;
         this.paused = false;
-        this.lastTime = performance.now();
+        this.lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
         this.gameLoop();
     }
     stop() {
         this.running = false;
         this.paused = false;
         if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
+            if (typeof cancelAnimationFrame !== 'undefined') {
+                cancelAnimationFrame(this.animationId);
+            }
+            else {
+                clearTimeout(this.animationId);
+            }
             this.animationId = null;
         }
     }
@@ -242,7 +269,7 @@ class GameManager {
     }
     resume() {
         this.paused = false;
-        this.lastTime = performance.now();
+        this.lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
     }
     onUpdate(callback) {
         this.updateCallbacks.push(callback);
@@ -348,7 +375,7 @@ async function createSprite() {
         parent: null,
         graphics: graphicsObj,
         render: function (ctx) {
-            if (!this.visible || this.alpha <= 0)
+            if (!ctx || !this.visible || this.alpha <= 0)
                 return;
             ctx.save();
             ctx.globalAlpha = this.alpha;
@@ -508,6 +535,9 @@ async function createStage(canvas) {
             // Mark for re-render on next frame
             if (typeof requestAnimationFrame !== 'undefined') {
                 requestAnimationFrame(() => this.update());
+            }
+            else {
+                setTimeout(() => this.update(), 16);
             }
         },
         addEventListener: function (type, listener) {

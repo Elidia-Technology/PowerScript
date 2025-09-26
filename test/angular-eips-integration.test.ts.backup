@@ -1,0 +1,508 @@
+/**
+ * Angular EIPS Integration Tests
+ * 
+ * Test suite for Angular services integration with EIPS client framework
+ */
+
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { TestBed } from '@angular/core/testing';
+import { NgZone } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+// Mock Angular core modules
+const mockNgZone = {
+  run: jest.fn((fn: Function) => fn()),
+  runOutsideAngular: jest.fn((fn: Function) => fn())
+};
+
+jest.mock('@angular/core', () => ({
+  Injectable: (config?: any) => (target: any) => target,
+  OnDestroy: class {},
+  NgZone: jest.fn(() => mockNgZone)
+}));
+
+// Mock RxJS
+const mockBehaviorSubject = jest.fn((initialValue: any) => ({
+  value: initialValue,
+  next: jest.fn(),
+  asObservable: jest.fn(() => ({
+    subscribe: jest.fn(),
+    pipe: jest.fn()
+  })),
+  complete: jest.fn()
+}));
+
+jest.mock('rxjs', () => ({
+  BehaviorSubject: mockBehaviorSubject,
+  Observable: jest.fn(),
+  Subject: jest.fn(() => ({
+    next: jest.fn(),
+    complete: jest.fn(),
+    asObservable: jest.fn()
+  }))
+}));
+
+// Mock EIPS client framework
+const mockCanvasManager = {
+  getStage: jest.fn(() => ({ addChild: jest.fn(), removeChild: jest.fn() })),
+  resize: jest.fn(),
+  startRendering: jest.fn(),
+  stopRendering: jest.fn(),
+  destroy: jest.fn()
+};
+
+const mockMediaManager = {
+  createAudioPlayer: jest.fn(async () => ({
+    load: jest.fn(),
+    play: jest.fn(),
+    pause: jest.fn(),
+    stop: jest.fn(),
+    setVolume: jest.fn(),
+    addEventListener: jest.fn(),
+    currentTime: 0,
+    duration: 0
+  })),
+  createVideoPlayer: jest.fn(async () => ({
+    load: jest.fn(),
+    play: jest.fn(),
+    pause: jest.fn(),
+    stop: jest.fn(),
+    setVolume: jest.fn(),
+    addEventListener: jest.fn(),
+    currentTime: 0,
+    duration: 0
+  })),
+  destroy: jest.fn()
+};
+
+const mockGameManager = {
+  start: jest.fn(),
+  stop: jest.fn(),
+  addGameObject: jest.fn(),
+  removeGameObject: jest.fn(),
+  isKeyPressed: jest.fn(() => false),
+  destroy: jest.fn()
+};
+
+const mockSprite = {
+  x: 0,
+  y: 0,
+  graphics: {
+    beginFill: jest.fn(),
+    drawRect: jest.fn(),
+    drawCircle: jest.fn(),
+    endFill: jest.fn(),
+    clear: jest.fn()
+  }
+};
+
+jest.mock('../src/client/index', () => ({
+  CanvasManager: jest.fn(() => mockCanvasManager),
+  MediaManager: jest.fn(() => mockMediaManager),
+  GameManager: jest.fn(() => mockGameManager),
+  createSprite: jest.fn(async () => mockSprite)
+}));
+
+// Import services after mocking
+import {
+  CanvasService,
+  MediaService,
+  GameService,
+  GraphicsService,
+  AnimationService
+} from '../src/client/angular';
+
+describe('Angular EIPS Integration Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('CanvasService', () => {
+    let service: CanvasService;
+
+    beforeEach(() => {
+      service = new CanvasService(mockNgZone as any);
+    });
+
+    afterEach(() => {
+      service.ngOnDestroy();
+    });
+
+    it('should create canvas service with correct properties', () => {
+      expect(service).toBeDefined();
+      expect(service.isReady$).toBeDefined();
+      expect(service.stage$).toBeDefined();
+      expect(service.renderStats$).toBeDefined();
+    });
+
+    it('should initialize canvas correctly', () => {
+      const mockCanvas = document.createElement('canvas');
+      service.initializeCanvas(mockCanvas, 800, 600);
+      
+      expect(mockNgZone.runOutsideAngular).toHaveBeenCalled();
+    });
+
+    it('should provide canvas management methods', () => {
+      expect(typeof service.startRendering).toBe('function');
+      expect(typeof service.stopRendering).toBe('function');
+      expect(typeof service.resize).toBe('function');
+      expect(typeof service.getStage).toBe('function');
+    });
+
+    it('should provide sprite creation method', async () => {
+      const sprite = await service.createSprite();
+      expect(sprite).toBeDefined();
+    });
+
+    it('should provide stage management methods', () => {
+      expect(typeof service.addToStage).toBe('function');
+      expect(typeof service.removeFromStage).toBe('function');
+    });
+
+    it('should handle ngOnDestroy correctly', () => {
+      const mockCanvas = document.createElement('canvas');
+      service.initializeCanvas(mockCanvas);
+      
+      service.ngOnDestroy();
+      
+      // Should not throw errors
+      expect(() => service.ngOnDestroy()).not.toThrow();
+    });
+  });
+
+  describe('MediaService', () => {
+    let service: MediaService;
+
+    beforeEach(() => {
+      service = new MediaService(mockNgZone as any);
+    });
+
+    afterEach(() => {
+      service.ngOnDestroy();
+    });
+
+    it('should create media service with correct properties', () => {
+      expect(service).toBeDefined();
+      expect(service.audioState$).toBeDefined();
+      expect(service.videoState$).toBeDefined();
+    });
+
+    it('should provide audio player methods', async () => {
+      expect(typeof service.createAudioPlayer).toBe('function');
+      expect(typeof service.loadAudio).toBe('function');
+      expect(typeof service.playAudio).toBe('function');
+      expect(typeof service.pauseAudio).toBe('function');
+      expect(typeof service.stopAudio).toBe('function');
+      expect(typeof service.setAudioVolume).toBe('function');
+    });
+
+    it('should provide video player methods', () => {
+      expect(typeof service.createVideoPlayer).toBe('function');
+      expect(typeof service.loadVideo).toBe('function');
+      expect(typeof service.playVideo).toBe('function');
+      expect(typeof service.pauseVideo).toBe('function');
+      expect(typeof service.stopVideo).toBe('function');
+      expect(typeof service.setVideoVolume).toBe('function');
+    });
+
+    it('should create audio player correctly', async () => {
+      await service.createAudioPlayer('test-player');
+      
+      expect(mockMediaManager.createAudioPlayer).toHaveBeenCalled();
+    });
+
+    it('should create video player correctly', async () => {
+      await service.createVideoPlayer('test-player');
+      
+      expect(mockMediaManager.createVideoPlayer).toHaveBeenCalled();
+    });
+
+    it('should handle audio loading with error handling', async () => {
+      await service.createAudioPlayer('test-player');
+      
+      // Should handle loading errors gracefully
+      await expect(service.loadAudio('test-player', 'test-url')).resolves.not.toThrow();
+    });
+
+    it('should handle ngOnDestroy correctly', () => {
+      service.ngOnDestroy();
+      
+      expect(() => service.ngOnDestroy()).not.toThrow();
+    });
+  });
+
+  describe('GameService', () => {
+    let service: GameService;
+
+    beforeEach(() => {
+      service = new GameService(mockNgZone as any);
+    });
+
+    afterEach(() => {
+      service.ngOnDestroy();
+    });
+
+    it('should create game service with correct properties', () => {
+      expect(service).toBeDefined();
+      expect(service.gameState$).toBeDefined();
+      expect(service.keyboardState$).toBeDefined();
+      expect(service.mouseState$).toBeDefined();
+    });
+
+    it('should provide game management methods', () => {
+      expect(typeof service.initializeGame).toBe('function');
+      expect(typeof service.startGame).toBe('function');
+      expect(typeof service.stopGame).toBe('function');
+      expect(typeof service.addGameObject).toBe('function');
+      expect(typeof service.removeGameObject).toBe('function');
+      expect(typeof service.isKeyPressed).toBe('function');
+      expect(typeof service.getGameManager).toBe('function');
+    });
+
+    it('should initialize game correctly', () => {
+      const mockCanvas = document.createElement('canvas');
+      service.initializeGame(mockCanvas);
+      
+      expect(mockNgZone.runOutsideAngular).toHaveBeenCalled();
+    });
+
+    it('should handle game state changes', () => {
+      const mockCanvas = document.createElement('canvas');
+      service.initializeGame(mockCanvas);
+      
+      service.startGame();
+      expect(mockGameManager.start).toHaveBeenCalled();
+      
+      service.stopGame();
+      expect(mockGameManager.stop).toHaveBeenCalled();
+    });
+
+    it('should handle game objects', () => {
+      const mockCanvas = document.createElement('canvas');
+      service.initializeGame(mockCanvas);
+      
+      const mockGameObject = { id: 'test' };
+      service.addGameObject(mockGameObject);
+      expect(mockGameManager.addGameObject).toHaveBeenCalledWith(mockGameObject);
+      
+      service.removeGameObject(mockGameObject);
+      expect(mockGameManager.removeGameObject).toHaveBeenCalledWith(mockGameObject);
+    });
+
+    it('should handle input checking', () => {
+      const result = service.isKeyPressed('Space');
+      expect(typeof result).toBe('boolean');
+    });
+
+    it('should handle ngOnDestroy correctly', () => {
+      const mockCanvas = document.createElement('canvas');
+      service.initializeGame(mockCanvas);
+      
+      service.ngOnDestroy();
+      
+      expect(() => service.ngOnDestroy()).not.toThrow();
+    });
+  });
+
+  describe('GraphicsService', () => {
+    let service: GraphicsService;
+
+    beforeEach(() => {
+      service = new GraphicsService();
+    });
+
+    it('should create graphics service', () => {
+      expect(service).toBeDefined();
+    });
+
+    it('should provide drawing methods', () => {
+      expect(typeof service.drawRect).toBe('function');
+      expect(typeof service.drawCircle).toBe('function');
+      expect(typeof service.drawLine).toBe('function');
+      expect(typeof service.clear).toBe('function');
+      expect(typeof service.beginFill).toBe('function');
+      expect(typeof service.endFill).toBe('function');
+      expect(typeof service.lineStyle).toBe('function');
+    });
+
+    it('should handle drawing operations', () => {
+      const mockGraphics = {
+        beginFill: jest.fn(),
+        drawRect: jest.fn(),
+        drawCircle: jest.fn(),
+        endFill: jest.fn(),
+        clear: jest.fn(),
+        lineStyle: jest.fn(),
+        moveTo: jest.fn(),
+        lineTo: jest.fn()
+      };
+
+      service.drawRect(mockGraphics, 10, 10, 50, 50, 0xFF0000);
+      expect(mockGraphics.beginFill).toHaveBeenCalledWith(0xFF0000);
+      expect(mockGraphics.drawRect).toHaveBeenCalledWith(10, 10, 50, 50);
+      expect(mockGraphics.endFill).toHaveBeenCalled();
+
+      service.drawCircle(mockGraphics, 25, 25, 20, 0x00FF00);
+      expect(mockGraphics.beginFill).toHaveBeenCalledWith(0x00FF00);
+      expect(mockGraphics.drawCircle).toHaveBeenCalledWith(25, 25, 20);
+
+      service.clear(mockGraphics);
+      expect(mockGraphics.clear).toHaveBeenCalled();
+    });
+
+    it('should handle null graphics objects gracefully', () => {
+      // Should not throw errors with null graphics
+      expect(() => {
+        service.drawRect(null, 0, 0, 100, 100);
+        service.drawCircle(null, 50, 50, 25);
+        service.clear(null);
+      }).not.toThrow();
+    });
+  });
+
+  describe('AnimationService', () => {
+    let service: AnimationService;
+
+    beforeEach(() => {
+      service = new AnimationService(mockNgZone as any);
+    });
+
+    afterEach(() => {
+      service.ngOnDestroy();
+    });
+
+    it('should create animation service with correct properties', () => {
+      expect(service).toBeDefined();
+      expect(service.activeAnimations$).toBeDefined();
+    });
+
+    it('should provide animation methods', () => {
+      expect(typeof service.animate).toBe('function');
+      expect(typeof service.stopAnimation).toBe('function');
+      expect(typeof service.stopAllAnimations).toBe('function');
+      expect(typeof service.getActiveAnimationsCount).toBe('function');
+    });
+
+    it('should handle animation creation', () => {
+      const mockTarget = { x: 0, y: 0 };
+      const properties = { x: 100, y: 100 };
+      
+      const animation$ = service.animate(mockTarget, properties, 1000);
+      expect(animation$).toBeDefined();
+      expect(typeof animation$.subscribe).toBe('function');
+    });
+
+    it('should handle animation count tracking', () => {
+      const count = service.getActiveAnimationsCount();
+      expect(typeof count).toBe('number');
+    });
+
+    it('should handle stopping animations', () => {
+      service.stopAnimation('test-id');
+      service.stopAllAnimations();
+      
+      // Should not throw errors
+      expect(() => {
+        service.stopAnimation('non-existent');
+        service.stopAllAnimations();
+      }).not.toThrow();
+    });
+
+    it('should handle ngOnDestroy correctly', () => {
+      service.ngOnDestroy();
+      
+      expect(() => service.ngOnDestroy()).not.toThrow();
+    });
+  });
+});
+
+describe('Angular EIPS Integration - Functional Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should export all services in EIPSAngularServices object', async () => {
+    const { EIPSAngularServices } = await import('../src/client/angular');
+    
+    expect(EIPSAngularServices).toHaveProperty('CanvasService');
+    expect(EIPSAngularServices).toHaveProperty('MediaService');
+    expect(EIPSAngularServices).toHaveProperty('GameService');
+    expect(EIPSAngularServices).toHaveProperty('GraphicsService');
+    expect(EIPSAngularServices).toHaveProperty('AnimationService');
+  });
+
+  it('should export services individually', async () => {
+    const services = await import('../src/client/angular');
+    
+    expect(services.CanvasService).toBeDefined();
+    expect(services.MediaService).toBeDefined();
+    expect(services.GameService).toBeDefined();
+    expect(services.GraphicsService).toBeDefined();
+    expect(services.AnimationService).toBeDefined();
+  });
+
+  it('should handle service dependencies correctly', () => {
+    const canvasService = new CanvasService(mockNgZone as any);
+    const mediaService = new MediaService(mockNgZone as any);
+    const gameService = new GameService(mockNgZone as any);
+    const graphicsService = new GraphicsService();
+    const animationService = new AnimationService(mockNgZone as any);
+    
+    expect(canvasService).toBeDefined();
+    expect(mediaService).toBeDefined();
+    expect(gameService).toBeDefined();
+    expect(graphicsService).toBeDefined();
+    expect(animationService).toBeDefined();
+    
+    // Cleanup
+    canvasService.ngOnDestroy();
+    mediaService.ngOnDestroy();
+    gameService.ngOnDestroy();
+    animationService.ngOnDestroy();
+  });
+
+  it('should handle observable streams correctly', () => {
+    const canvasService = new CanvasService(mockNgZone as any);
+    const mediaService = new MediaService(mockNgZone as any);
+    const gameService = new GameService(mockNgZone as any);
+    const animationService = new AnimationService(mockNgZone as any);
+    
+    // All services should have observable properties
+    expect(canvasService.isReady$).toBeDefined();
+    expect(canvasService.stage$).toBeDefined();
+    
+    expect(mediaService.audioState$).toBeDefined();
+    expect(mediaService.videoState$).toBeDefined();
+    
+    expect(gameService.gameState$).toBeDefined();
+    expect(gameService.keyboardState$).toBeDefined();
+    expect(gameService.mouseState$).toBeDefined();
+    
+    expect(animationService.activeAnimations$).toBeDefined();
+    
+    // Cleanup
+    canvasService.ngOnDestroy();
+    mediaService.ngOnDestroy();
+    gameService.ngOnDestroy();
+    animationService.ngOnDestroy();
+  });
+
+  it('should handle error cases gracefully', () => {
+    const services = [
+      new CanvasService(mockNgZone as any),
+      new MediaService(mockNgZone as any),
+      new GameService(mockNgZone as any),
+      new GraphicsService(),
+      new AnimationService(mockNgZone as any)
+    ];
+    
+    // All services should handle null/undefined inputs gracefully
+    expect(() => {
+      services.forEach(service => {
+        if ('ngOnDestroy' in service && typeof service.ngOnDestroy === 'function') {
+          service.ngOnDestroy();
+        }
+      });
+    }).not.toThrow();
+  });
+});
