@@ -64,7 +64,7 @@ class PowerScriptConcurrency extends events_1.EventEmitter {
             // Stop scheduler
             this.scheduler.stop();
             // Stop all queues
-            for (const queue of this.queues.values()) {
+            for (const queue of Array.from(this.queues.values())) {
                 queue.stop();
             }
             // Stop all worker pools
@@ -294,7 +294,7 @@ class PowerScriptConcurrency extends events_1.EventEmitter {
      */
     getMetrics() {
         const queueMetrics = {};
-        for (const [queueId, queue] of this.queues) {
+        for (const [queueId, queue] of Array.from(this.queues.entries())) {
             queueMetrics[queueId] = queue.getStats();
         }
         const jobMetrics = {};

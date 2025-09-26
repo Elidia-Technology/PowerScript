@@ -148,7 +148,7 @@ class ErrorManager {
             stats.errorsBySeverity[severity] = 0;
         }
         // Count errors
-        for (const errorReport of this._errors.values()) {
+        for (const errorReport of Array.from(this._errors.values())) {
             if (errorReport.handled) {
                 stats.handledErrors++;
             }

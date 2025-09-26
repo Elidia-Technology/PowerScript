@@ -113,7 +113,7 @@ class RBACProvider {
             // Add default permissions
             permissions.push(...this.config.defaultPermissions);
             // Remove duplicates
-            return [...new Set(permissions)];
+            return Array.from(new Set(permissions));
         }
         catch (error) {
             return this.config.defaultPermissions;
@@ -160,7 +160,7 @@ class RBACProvider {
         try {
             this.roles.delete(roleId);
             // Remove role from all users
-            for (const [userId, userRoles] of this.userRoles.entries()) {
+            for (const [userId, userRoles] of Array.from(this.userRoles.entries())) {
                 const updatedRoles = userRoles.filter(r => r !== roleId);
                 this.userRoles.set(userId, updatedRoles);
             }

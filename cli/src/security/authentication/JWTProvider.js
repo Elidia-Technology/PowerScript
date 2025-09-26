@@ -19,7 +19,7 @@ class JWTProvider {
         try {
             // Mock authentication - find user by username
             let user;
-            for (const u of this.users.values()) {
+            for (const u of Array.from(this.users.values())) {
                 if (u.username === request.username) {
                     user = u;
                     break;

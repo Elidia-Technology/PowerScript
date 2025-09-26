@@ -186,7 +186,7 @@ class TaskScheduler extends events_1.EventEmitter {
         if (runningJobs >= this.config.maxConcurrentJobs) {
             return; // Too many concurrent jobs
         }
-        for (const job of this.jobs.values()) {
+        for (const job of Array.from(this.jobs.values())) {
             if (job.status === types_1.JobStatus.SCHEDULED &&
                 job.nextRun &&
                 job.nextRun <= now) {
