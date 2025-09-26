@@ -234,7 +234,7 @@ export class MetricsCollector {
         const loadAverage = this.getLoadAverage();
 
         // Memory metrics
-        const memoryUsage = process.memoryUsage ? process.memoryUsage() : {
+        const memoryUsage = (process as any).memoryUsage ? (process as any).memoryUsage() : {
             rss: 0,
             heapUsed: 0,
             heapTotal: 0,

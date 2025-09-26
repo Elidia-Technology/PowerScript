@@ -130,7 +130,7 @@ export class PowerScriptScaffolding extends EventEmitter {
       const content = this._generateClassContent(className, options);
 
       // Write file
-      if (!options.dryRun) {
+      if (options.dryRun !== true) {
         await this._ensureDirectoryExists(path.dirname(filePath));
         
         if (!options.overwrite && await this._fileExists(filePath)) {
@@ -179,7 +179,7 @@ export class PowerScriptScaffolding extends EventEmitter {
       // Create project structure
       const files = await this._generateAIAppFiles(appName, options);
 
-      if (!options.dryRun) {
+      if (options.dryRun !== true) {
         await this._ensureDirectoryExists(projectDir);
         
         for (const file of files) {
@@ -239,7 +239,7 @@ export class PowerScriptScaffolding extends EventEmitter {
       // Create RAG bot files
       const files = await this._generateRAGBotFiles(botName, options);
 
-      if (!options.dryRun) {
+      if (options.dryRun !== true) {
         await this._ensureDirectoryExists(projectDir);
         
         for (const file of files) {
@@ -294,7 +294,7 @@ export class PowerScriptScaffolding extends EventEmitter {
       // Create server files
       const files = await this._generateServerFiles(serverName, options);
 
-      if (!options.dryRun) {
+      if (options.dryRun !== true) {
         await this._ensureDirectoryExists(projectDir);
         
         for (const file of files) {
@@ -350,7 +350,7 @@ export class PowerScriptScaffolding extends EventEmitter {
 
       const targetDir = options.outputDir || this.outputDir;
 
-      if (!options.dryRun) {
+      if (options.dryRun !== true) {
         await this._ensureDirectoryExists(targetDir);
         
         for (const file of template.files) {
@@ -815,7 +815,12 @@ export class PowerScriptScaffolding extends EventEmitter {
   }
 
   private _toKebabCase(str: string): string {
-    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+    return str
+      // Insert hyphens before uppercase letters that follow lowercase letters
+      .replace(/([a-z])([A-Z])/g, '$1-$2')
+      // Insert hyphens before the last uppercase letter in a sequence of uppercase letters
+      .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+      .toLowerCase();
   }
 
   private async _ensureDirectoryExists(dir: string): Promise<void> {

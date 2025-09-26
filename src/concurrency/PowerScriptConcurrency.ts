@@ -92,7 +92,7 @@ export class PowerScriptConcurrency extends EventEmitter {
       this.scheduler.stop();
 
       // Stop all queues
-      for (const queue of this.queues.values()) {
+      for (const queue of Array.from(this.queues.values())) {
         queue.stop();
       }
 
@@ -420,7 +420,7 @@ export class PowerScriptConcurrency extends EventEmitter {
    */
   getMetrics(): ConcurrencyMetrics {
     const queueMetrics: any = {};
-    for (const [queueId, queue] of this.queues) {
+    for (const [queueId, queue] of Array.from(this.queues.entries())) {
       queueMetrics[queueId] = queue.getStats();
     }
 

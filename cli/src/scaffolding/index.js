@@ -57,7 +57,7 @@ class PowerScriptScaffolding extends events_1.EventEmitter {
             // Generate class content
             const content = this._generateClassContent(className, options);
             // Write file
-            if (!options.dryRun) {
+            if (options.dryRun !== true) {
                 await this._ensureDirectoryExists(path.dirname(filePath));
                 if (!options.overwrite && await this._fileExists(filePath)) {
                     result.warnings.push(`File ${filePath} already exists, use --overwrite to replace`);
@@ -101,7 +101,7 @@ class PowerScriptScaffolding extends events_1.EventEmitter {
             const projectDir = path.join(options.outputDir || this.outputDir, this._toKebabCase(name));
             // Create project structure
             const files = await this._generateAIAppFiles(appName, options);
-            if (!options.dryRun) {
+            if (options.dryRun !== true) {
                 await this._ensureDirectoryExists(projectDir);
                 for (const file of files) {
                     const fullPath = path.join(projectDir, file.path);
@@ -152,7 +152,7 @@ class PowerScriptScaffolding extends events_1.EventEmitter {
             const projectDir = path.join(options.outputDir || this.outputDir, this._toKebabCase(name));
             // Create RAG bot files
             const files = await this._generateRAGBotFiles(botName, options);
-            if (!options.dryRun) {
+            if (options.dryRun !== true) {
                 await this._ensureDirectoryExists(projectDir);
                 for (const file of files) {
                     const fullPath = path.join(projectDir, file.path);
@@ -200,7 +200,7 @@ class PowerScriptScaffolding extends events_1.EventEmitter {
             const projectDir = path.join(options.outputDir || this.outputDir, this._toKebabCase(name));
             // Create server files
             const files = await this._generateServerFiles(serverName, options);
-            if (!options.dryRun) {
+            if (options.dryRun !== true) {
                 await this._ensureDirectoryExists(projectDir);
                 for (const file of files) {
                     const fullPath = path.join(projectDir, file.path);
@@ -249,7 +249,7 @@ class PowerScriptScaffolding extends events_1.EventEmitter {
         try {
             this.emit('generationStart', { type: 'template', name: templateName });
             const targetDir = options.outputDir || this.outputDir;
-            if (!options.dryRun) {
+            if (options.dryRun !== true) {
                 await this._ensureDirectoryExists(targetDir);
                 for (const file of template.files) {
                     const fullPath = path.join(targetDir, file.path);
@@ -641,7 +641,12 @@ class PowerScriptScaffolding extends events_1.EventEmitter {
         return str.replace(/(?:^|[-_])(\w)/g, (_, c) => c.toUpperCase());
     }
     _toKebabCase(str) {
-        return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+        return str
+            // Insert hyphens before uppercase letters that follow lowercase letters
+            .replace(/([a-z])([A-Z])/g, '$1-$2')
+            // Insert hyphens before the last uppercase letter in a sequence of uppercase letters
+            .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+            .toLowerCase();
     }
     async _ensureDirectoryExists(dir) {
         try {

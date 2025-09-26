@@ -29,7 +29,7 @@ export class JWTProvider implements AuthProvider {
         try {
             // Mock authentication - find user by username
             let user: User | undefined;
-            for (const u of this.users.values()) {
+            for (const u of Array.from(this.users.values())) {
                 if (u.username === request.username) {
                     user = u;
                     break;

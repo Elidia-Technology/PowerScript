@@ -288,7 +288,8 @@ export class PowerScriptTest extends EventEmitter {
    * Clear all mocks
    */
   clearMocks(): void {
-    for (const mock of this.mocks.values()) {
+    const mockValues = Array.from(this.mocks.values());
+    for (const mock of mockValues) {
       if (mock.mockClear) {
         mock.mockClear();
       }
@@ -694,6 +695,66 @@ export class PowerScriptTest extends EventEmitter {
 
 // Export global instance
 export const testFramework = new PowerScriptTest();
+
+// Global test functions for convenience
+export const describe = testFramework.describe.bind(testFramework);
+export const it = testFramework.it.bind(testFramework);
+export const beforeEach = testFramework.beforeEach.bind(testFramework);
+export const afterEach = testFramework.afterEach.bind(testFramework);
+export const beforeAll = testFramework.beforeAll.bind(testFramework);
+export const afterAll = testFramework.afterAll.bind(testFramework);
+
+// Global assertion functions
+export const assertTrue = (condition: boolean, message?: string) => {
+  if (!condition) {
+    throw new Error(message || 'Assertion failed: condition is not true');
+  }
+};
+
+export const assertFalse = (condition: boolean, message?: string) => {
+  if (condition) {
+    throw new Error(message || 'Assertion failed: condition is not false');
+  }
+};
+
+export const assertEquals = (actual: any, expected: any, message?: string) => {
+  if (actual !== expected) {
+    throw new Error(message || `Assertion failed: expected ${expected}, got ${actual}`);
+  }
+};
+
+export const assertDeepEquals = (actual: any, expected: any, message?: string) => {
+  if (!testFramework['deepEqual'](actual, expected)) {
+    throw new Error(message || `Assertion failed: objects are not deeply equal`);
+  }
+};
+
+export const assertThrows = (fn: () => any, expectedError?: string | RegExp, message?: string) => {
+  try {
+    fn();
+    throw new Error(message || 'Expected function to throw an error');
+  } catch (error: any) {
+    if (expectedError) {
+      if (typeof expectedError === 'string' && !error.message.includes(expectedError)) {
+        throw new Error(message || `Expected error message to contain "${expectedError}"`);
+      }
+      if (expectedError instanceof RegExp && !expectedError.test(error.message)) {
+        throw new Error(message || `Expected error message to match ${expectedError}`);
+      }
+    }
+  }
+};
+
+// Global mock functions
+export const createMock = (name?: string) => testFramework.mockFunction(name);
+
+// Global debug functions
+export const captureSnapshot = (label?: string) => testFramework.captureSnapshot(label);
+export const startTimer = (name: string) => testFramework.startTimer(name);
+export const endTimer = (name: string) => testFramework.endTimer(name);
+
+// Export the testing instance for advanced usage
+export const testing = testFramework;
 
 // Export for use in other modules
 export default PowerScriptTest;

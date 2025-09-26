@@ -90,12 +90,17 @@ export class SecurityUtils {
   }
 
   static generateSecureId(length: number = 32): string {
-    return 'secure_' + Math.random().toString(36).substr(2, length);
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = 'secure_';
+    for (let i = 0; i < length - 7; i++) { // Account for 'secure_' prefix
+      result += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return result;
   }
 
   static createCommonSchemas(): any {
     return {
-      email: { type: 'string', format: 'email' },
+      email: { type: 'email', format: 'email' },
       password: { type: 'string', minLength: 8 },
       username: { type: 'string', minLength: 3 }
     };
@@ -103,9 +108,10 @@ export class SecurityUtils {
 
   static createSandboxPresets(): any {
     return {
-      restricted: { allowedGlobals: [], timeout: 1000 },
-      standard: { allowedGlobals: ['Math', 'Date'], timeout: 5000 },
-      permissive: { allowedGlobals: ['Math', 'Date', 'console'], timeout: 10000 }
+      minimal: { allowedGlobals: [], timeout: 5000 },
+      standard: { allowedGlobals: ['Math', 'Date'], timeout: 30000 },
+      extended: { allowedGlobals: ['Math', 'Date', 'console'], timeout: 120000 },
+      isolated: { allowedGlobals: [], timeout: 1000, memoryLimit: 16 * 1024 * 1024 }
     };
   }
 }
@@ -130,9 +136,9 @@ export class ECCProvider {
     return `encrypted-${dataStr}`;
   }
 
-  async decrypt(data: string, key: string | Buffer): Promise<Buffer> {
+  async decrypt(data: string, key: string | Buffer): Promise<string> {
     const decrypted = data.replace('encrypted-', '');
-    return Buffer.from(decrypted);
+    return decrypted;
   }
 
   async sign(data: string | Buffer, privateKey: string): Promise<string> {

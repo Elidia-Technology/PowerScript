@@ -384,9 +384,28 @@ export class PowerScriptSecurityEnhanced extends EventEmitter {
     }
 
     try {
+      // Validate base64 format first
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(encryptedData)) {
+        throw new Error('Invalid base64 format');
+      }
+      
       const decrypted = Buffer.from(encryptedData, 'base64').toString();
-      this._logAuditEvent('decryptSensitiveData', 'decryption', 'success', { userId });
-      return decrypted;
+      
+      // Check if decrypted data looks like valid text
+      if (decrypted.includes('\x00') || decrypted.length === 0) {
+        throw new Error('Invalid encrypted data');
+      }
+      
+      // Try to parse as JSON first, if it fails return as string
+      try {
+        const parsed = JSON.parse(decrypted);
+        this._logAuditEvent('decryptSensitiveData', 'decryption', 'success', { userId });
+        return parsed;
+      } catch {
+        // Not JSON, return as string
+        this._logAuditEvent('decryptSensitiveData', 'decryption', 'success', { userId });
+        return decrypted;
+      }
     } catch (error: any) {
       const securityError: any = new Error('Invalid encrypted data');
       securityError.name = 'SecurityError';
@@ -444,11 +463,48 @@ export class PowerScriptSecurityEnhanced extends EventEmitter {
     }
 
     try {
-      // Simple validation logic
+      const errors: string[] = [];
+      const sanitizedData: any = {};
+
+      if (schema && typeof schema === 'object') {
+        for (const [key, rule] of Object.entries(schema)) {
+          const value = data[key];
+          const ruleObj = rule as any;
+
+          // Type validation
+          if (ruleObj.type) {
+            if (ruleObj.type === 'string' && typeof value !== 'string') {
+              errors.push(`${key} must be a string`);
+              continue;
+            }
+            if (ruleObj.type === 'number' && typeof value !== 'number') {
+              errors.push(`${key} must be a number`);
+              continue;
+            }
+            if (ruleObj.type === 'email' && (typeof value !== 'string' || !value.includes('@'))) {
+              errors.push(`${key} must be a valid email`);
+              continue;
+            }
+          }
+
+          // Length validation
+          if (ruleObj.minLength && typeof value === 'string' && value.length < ruleObj.minLength) {
+            errors.push(`${key} must be at least ${ruleObj.minLength} characters`);
+          }
+
+          // Sanitize HTML content
+          if (typeof value === 'string') {
+            sanitizedData[key] = value.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/script/gi, '');
+          } else {
+            sanitizedData[key] = value;
+          }
+        }
+      }
+
       const result = {
-        valid: true,
-        sanitized: data,
-        errors: []
+        isValid: errors.length === 0,
+        errors,
+        sanitizedData
       };
       
       this._logAuditEvent('validateAndSanitize', 'validation', 'success', {});
@@ -501,10 +557,26 @@ export class PowerScriptSecurityEnhanced extends EventEmitter {
       if (!error) {
         try {
           if (code.includes('return')) {
-            const func = new Function('context', code);
+            // Create function with context variables as parameters
+            const contextKeys = context ? Object.keys(context) : [];
+            const contextValues = context ? Object.values(context) : [];
+            const funcBody = contextKeys.length > 0 
+              ? `const {${contextKeys.join(', ')}} = arguments[0]; ${code}`
+              : code;
+            const func = new Function(funcBody);
             result = func(context);
           } else {
+            // For simple expressions, inject context into global scope
+            if (context) {
+              Object.assign(global, context);
+            }
             result = eval(code) as T;
+            // Clean up global scope
+            if (context) {
+              for (const key of Object.keys(context)) {
+                delete (global as any)[key];
+              }
+            }
           }
         } catch (syntaxError) {
           error = syntaxError;

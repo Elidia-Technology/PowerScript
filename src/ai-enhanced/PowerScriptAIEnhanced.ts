@@ -191,7 +191,7 @@ export class PowerScriptAIEnhanced extends EventEmitter {
     this.modelProviders.set('generation', generationProvider);
 
     // Set up event forwarding
-    for (const [name, provider] of this.modelProviders) {
+    for (const [name, provider] of Array.from(this.modelProviders.entries())) {
       provider.on('model:loaded', (model) => this.emit('model:loaded', model.id, model));
       provider.on('model:error', (error) => this.emit('model:error', error));
     }
@@ -238,7 +238,7 @@ export class PowerScriptAIEnhanced extends EventEmitter {
   async listModels(): Promise<ModelInfo[]> {
     const allModels: ModelInfo[] = [];
     
-    for (const [name, provider] of this.modelProviders) {
+    for (const [name, provider] of Array.from(this.modelProviders.entries())) {
       try {
         const models = await provider.listModels();
         allModels.push(...models);
@@ -257,7 +257,7 @@ export class PowerScriptAIEnhanced extends EventEmitter {
     modelId: string, 
     onProgress?: ProgressCallback
   ): Promise<void> {
-    for (const [name, provider] of this.modelProviders) {
+    for (const [name, provider] of Array.from(this.modelProviders.entries())) {
       try {
         const models = await provider.listModels();
         const model = models.find(m => m.id === modelId);
@@ -300,7 +300,7 @@ export class PowerScriptAIEnhanced extends EventEmitter {
     await this.checkMemoryRequirements(modelId, targetDevice);
 
     // Load model from appropriate provider
-    for (const [name, provider] of this.modelProviders) {
+    for (const [name, provider] of Array.from(this.modelProviders.entries())) {
       try {
         const models = await provider.listModels();
         const modelInfo = models.find(m => m.id === modelId);
@@ -669,7 +669,7 @@ export class PowerScriptAIEnhanced extends EventEmitter {
     const results: BenchmarkResult[] = [];
     const models = await this.listModels();
     
-    for (const device of this.hardwareProviders.keys()) {
+    for (const device of Array.from(this.hardwareProviders.keys())) {
       for (const model of models.slice(0, 3)) { // Test first 3 models
         try {
           const startTime = Date.now();
@@ -782,7 +782,7 @@ export class PowerScriptAIEnhanced extends EventEmitter {
     tasks: { running: number; pending: number; completed: number };
   }> {
     const hardware: HardwareInfo[] = [];
-    for (const provider of this.hardwareProviders.values()) {
+    for (const provider of Array.from(this.hardwareProviders.values())) {
       const devices = await provider.getDeviceInfo();
       hardware.push(...devices);
     }
@@ -846,7 +846,7 @@ export class PowerScriptAIEnhanced extends EventEmitter {
     // Handle task timeouts
     setInterval(() => {
       const now = Date.now();
-      for (const [id, task] of this.runningTasks) {
+      for (const [id, task] of Array.from(this.runningTasks.entries())) {
         if (task.status === 'running' && 
             task.startedAt && 
             (now - task.startedAt.getTime()) > this.config.timeoutMs) {
@@ -867,7 +867,7 @@ export class PowerScriptAIEnhanced extends EventEmitter {
     console.log('🧹 Cleaning up PowerScript Enhanced AI...');
     
     // Unload all models
-    for (const modelId of this.loadedModels.keys()) {
+    for (const modelId of Array.from(this.loadedModels.keys())) {
       try {
         await this.unloadModel(modelId);
       } catch (error) {

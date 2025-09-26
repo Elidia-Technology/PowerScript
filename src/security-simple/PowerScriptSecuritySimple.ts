@@ -36,6 +36,7 @@ export interface ValidationRule {
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
+  sanitizedData?: any;
 }
 
 export interface SecurityStatus {
@@ -341,6 +342,120 @@ export class PowerScriptSecuritySimple extends EventEmitter {
   }
 
   /**
+   * Encrypt sensitive data (supports objects and strings)
+   */
+  async encryptSensitiveData(data: any, password: string = 'default'): Promise<string> {
+    try {
+      const dataString = typeof data === 'string' ? data : JSON.stringify(data);
+      const encryptionResult = await this.encrypt(dataString, password);
+      return JSON.stringify(encryptionResult);
+    } catch (error) {
+      this.emit('error', error);
+      throw new Error(`Sensitive data encryption failed: ${error}`);
+    }
+  }
+
+  /**
+   * Decrypt sensitive data (returns original type)
+   */
+  async decryptSensitiveData(encryptedData: string, password: string = 'default'): Promise<any> {
+    try {
+      const encryptionResult = JSON.parse(encryptedData);
+      const decryptedString = await this.decrypt(encryptionResult, password);
+      
+      // Try to parse as JSON first, if it fails return as string
+      try {
+        return JSON.parse(decryptedString);
+      } catch {
+        return decryptedString;
+      }
+    } catch (error) {
+      this.emit('error', error);
+      throw new Error(`Sensitive data decryption failed: ${error}`);
+    }
+  }
+
+  /**
+   * Secure hash function (alias for hashPassword)
+   */
+  async secureHash(data: string): Promise<string> {
+    return this.hashPassword(data);
+  }
+
+  /**
+   * Validate and sanitize input data
+   */
+  async validateAndSanitize(data: any, schema: any): Promise<ValidationResult> {
+    try {
+      // Simple validation implementation
+      const errors: string[] = [];
+      const sanitizedData: any = {};
+
+      if (schema && typeof schema === 'object') {
+        for (const [key, rule] of Object.entries(schema)) {
+          const value = data[key];
+          const ruleObj = rule as any;
+
+          // Type validation
+          if (ruleObj.type) {
+            if (ruleObj.type === 'string' && typeof value !== 'string') {
+              errors.push(`${key} must be a string`);
+              continue;
+            }
+            if (ruleObj.type === 'number' && typeof value !== 'number') {
+              errors.push(`${key} must be a number`);
+              continue;
+            }
+            if (ruleObj.type === 'email' && (typeof value !== 'string' || !value.includes('@'))) {
+              errors.push(`${key} must be a valid email`);
+              continue;
+            }
+          }
+
+          // Length validation
+          if (ruleObj.minLength && typeof value === 'string' && value.length < ruleObj.minLength) {
+            errors.push(`${key} must be at least ${ruleObj.minLength} characters`);
+          }
+
+          // Sanitize HTML content
+          if (typeof value === 'string') {
+            sanitizedData[key] = SecurityUtils.escapeHtml(value);
+          } else {
+            sanitizedData[key] = value;
+          }
+        }
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        sanitizedData
+      };
+    } catch (error) {
+      this.emit('error', error);
+      throw new Error(`Validation failed: ${error}`);
+    }
+  }
+
+  /**
+   * Execute code securely in sandbox
+   */
+  async executeSecurely<T = any>(code: string, context: any = {}): Promise<{ result?: T; error?: Error; success: boolean }> {
+    try {
+      const result = await this.executeInSandbox(code, context);
+      return {
+        result,
+        success: true
+      };
+    } catch (error) {
+      return {
+        error: error as Error,
+        success: false
+      };
+    }
+  }
+
+  /**
    * Get security status
    */
   getStatus(): SecurityStatus {
@@ -410,6 +525,86 @@ export class SecurityUtils {
    */
   static generateUUID(): string {
     return crypto.randomUUID();
+  }
+
+  /**
+   * Generate secure ID with custom length
+   */
+  static generateSecureId(length: number = 32): string {
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const randomBytes = crypto.randomBytes(length);
+    let result = '';
+    
+    for (let i = 0; i < length; i++) {
+      result += charset[randomBytes[i] % charset.length];
+    }
+    
+    return result;
+  }
+
+  /**
+   * Validate password strength
+   */
+  static validatePasswordStrength(password: string): { isStrong: boolean; score: number; issues: string[] } {
+    const issues: string[] = [];
+    let score = 0;
+
+    if (password.length >= 8) score += 25;
+    else issues.push('Password should be at least 8 characters');
+
+    if (/[a-z]/.test(password)) score += 25;
+    else issues.push('Password should contain lowercase letters');
+
+    if (/[A-Z]/.test(password)) score += 25;
+    else issues.push('Password should contain uppercase letters');
+
+    if (/[0-9]/.test(password)) score += 15;
+    else issues.push('Password should contain numbers');
+
+    if (/[^a-zA-Z0-9]/.test(password)) score += 10;
+    else issues.push('Password should contain special characters');
+
+    return {
+      isStrong: score >= 75,
+      score,
+      issues
+    };
+  }
+
+  /**
+   * Create common validation schemas
+   */
+  static createCommonSchemas() {
+    return {
+      email: { type: 'string', pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+      password: { type: 'string', minLength: 8 },
+      username: { type: 'string', minLength: 3 },
+      phone: { type: 'string', pattern: /^\+?[\d\s\-\(\)]+$/ },
+      url: { type: 'string', pattern: /^https?:\/\/.+/ }
+    };
+  }
+
+  /**
+   * Create sandbox presets
+   */
+  static createSandboxPresets() {
+    return {
+      minimal: {
+        timeout: 1000,
+        memoryLimit: 1024 * 1024, // 1MB
+        allowedGlobals: []
+      },
+      standard: {
+        timeout: 5000,
+        memoryLimit: 10 * 1024 * 1024, // 10MB
+        allowedGlobals: ['Math', 'Date', 'JSON']
+      },
+      extended: {
+        timeout: 10000,
+        memoryLimit: 50 * 1024 * 1024, // 50MB
+        allowedGlobals: ['Math', 'Date', 'JSON', 'console', 'setTimeout']
+      }
+    };
   }
 }
 

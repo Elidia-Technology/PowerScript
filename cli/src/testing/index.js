@@ -4,7 +4,7 @@
  * A complete testing framework for PowerScript applications
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testFramework = exports.PowerScriptTest = void 0;
+exports.testing = exports.endTimer = exports.startTimer = exports.captureSnapshot = exports.createMock = exports.assertThrows = exports.assertDeepEquals = exports.assertEquals = exports.assertFalse = exports.assertTrue = exports.afterAll = exports.beforeAll = exports.afterEach = exports.beforeEach = exports.it = exports.describe = exports.testFramework = exports.PowerScriptTest = void 0;
 const events_1 = require("events");
 const fs = require("fs/promises");
 const path = require("path");
@@ -220,7 +220,8 @@ class PowerScriptTest extends events_1.EventEmitter {
      * Clear all mocks
      */
     clearMocks() {
-        for (const mock of this.mocks.values()) {
+        const mockValues = Array.from(this.mocks.values());
+        for (const mock of mockValues) {
             if (mock.mockClear) {
                 mock.mockClear();
             }
@@ -574,5 +575,66 @@ class PowerScriptTest extends events_1.EventEmitter {
 exports.PowerScriptTest = PowerScriptTest;
 // Export global instance
 exports.testFramework = new PowerScriptTest();
+// Global test functions for convenience
+exports.describe = exports.testFramework.describe.bind(exports.testFramework);
+exports.it = exports.testFramework.it.bind(exports.testFramework);
+exports.beforeEach = exports.testFramework.beforeEach.bind(exports.testFramework);
+exports.afterEach = exports.testFramework.afterEach.bind(exports.testFramework);
+exports.beforeAll = exports.testFramework.beforeAll.bind(exports.testFramework);
+exports.afterAll = exports.testFramework.afterAll.bind(exports.testFramework);
+// Global assertion functions
+const assertTrue = (condition, message) => {
+    if (!condition) {
+        throw new Error(message || 'Assertion failed: condition is not true');
+    }
+};
+exports.assertTrue = assertTrue;
+const assertFalse = (condition, message) => {
+    if (condition) {
+        throw new Error(message || 'Assertion failed: condition is not false');
+    }
+};
+exports.assertFalse = assertFalse;
+const assertEquals = (actual, expected, message) => {
+    if (actual !== expected) {
+        throw new Error(message || `Assertion failed: expected ${expected}, got ${actual}`);
+    }
+};
+exports.assertEquals = assertEquals;
+const assertDeepEquals = (actual, expected, message) => {
+    if (!exports.testFramework['deepEqual'](actual, expected)) {
+        throw new Error(message || `Assertion failed: objects are not deeply equal`);
+    }
+};
+exports.assertDeepEquals = assertDeepEquals;
+const assertThrows = (fn, expectedError, message) => {
+    try {
+        fn();
+        throw new Error(message || 'Expected function to throw an error');
+    }
+    catch (error) {
+        if (expectedError) {
+            if (typeof expectedError === 'string' && !error.message.includes(expectedError)) {
+                throw new Error(message || `Expected error message to contain "${expectedError}"`);
+            }
+            if (expectedError instanceof RegExp && !expectedError.test(error.message)) {
+                throw new Error(message || `Expected error message to match ${expectedError}`);
+            }
+        }
+    }
+};
+exports.assertThrows = assertThrows;
+// Global mock functions
+const createMock = (name) => exports.testFramework.mockFunction(name);
+exports.createMock = createMock;
+// Global debug functions
+const captureSnapshot = (label) => exports.testFramework.captureSnapshot(label);
+exports.captureSnapshot = captureSnapshot;
+const startTimer = (name) => exports.testFramework.startTimer(name);
+exports.startTimer = startTimer;
+const endTimer = (name) => exports.testFramework.endTimer(name);
+exports.endTimer = endTimer;
+// Export the testing instance for advanced usage
+exports.testing = exports.testFramework;
 // Export for use in other modules
 exports.default = PowerScriptTest;

@@ -106,7 +106,8 @@ describe('PowerScript Scaffolding Module', () => {
       database: 'postgresql',
       authentication: 'jwt',
       features: ['rest', 'websocket'],
-      middleware: ['auth', 'logging']
+      middleware: ['auth', 'logging'],
+      dryRun: false
     });
 
     expect(result.success).toBe(true);
