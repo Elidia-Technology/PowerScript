@@ -97,6 +97,22 @@ import { PowerScriptScaffolding } from './scaffolding';
 // UI & Cross-Platform Support Module (Module 23)
 import { PowerScriptUI } from './ui';
 
+// Data Engineering Pipelines Module (Module 27)
+export { 
+  PowerScriptDataPipeline,
+  ETLFramework,
+  ETLPipeline,
+  PowerScriptStreamProcessor,
+  BatchProcessor,
+  ConnectorFactory,
+  BaseDataConnector,
+  KafkaConnector,
+  SparkConnector,
+  FlinkConnector,
+  DatabaseConnector,
+  dataPipeline
+} from './data-engineering';
+
 // AI Advanced Module (Module 21)
 export { 
   RAGSystem,
@@ -131,6 +147,7 @@ import { PowerScriptMultiAgent } from './ai-advanced/MultiAgent';
 
 // Import standalone PowerScript classes for use in main class
 import { PowerScriptCloud } from './cloud';
+import { PowerScriptDataPipeline } from './data-engineering';
 
 /**
  * Main PowerScript class that provides unified access to all modules
@@ -156,6 +173,7 @@ export class PowerScript {
   private _testing?: PowerScriptTest;
   private _scaffolding?: PowerScriptScaffolding;
   private _ui?: PowerScriptUI;
+  private _dataPipeline?: PowerScriptDataPipeline;
 
   private constructor() {
     this._core = new PowerScriptCore();
@@ -322,6 +340,17 @@ export class PowerScript {
       instance._ui = new PowerScriptUI();
     }
     return instance._ui;
+  }
+
+  /**
+   * Get the data pipeline instance
+   */
+  public static get dataPipeline(): PowerScriptDataPipeline {
+    const instance = PowerScript.getInstance();
+    if (!instance._dataPipeline) {
+      instance._dataPipeline = new PowerScriptDataPipeline();
+    }
+    return instance._dataPipeline;
   }
 
   /**
