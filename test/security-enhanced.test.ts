@@ -10,7 +10,8 @@ import {
   OpenIDProvider,
   InputValidator,
   SecureSandbox,
-  EnhancedAuthorizationProvider
+  EnhancedAuthorizationProvider,
+  AuthProvider
 } from '../src/security-enhanced';
 
 describe('PowerScript Enhanced Security Module', () => {
@@ -405,7 +406,7 @@ describe('PowerScript Enhanced Security Module', () => {
     it('should handle security errors with proper context', async () => {
       try {
         await security.decryptSensitiveData('definitely-not-encrypted-data');
-      } catch (error) {
+      } catch (error: any) {
         expect(error.name).toBe('SecurityError');
         expect(error.code).toBeTruthy();
         expect(error.eventType).toBeTruthy();

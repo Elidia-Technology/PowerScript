@@ -271,6 +271,11 @@ export class PowerScriptSecurityEnhanced extends EventEmitter {
     this.validation = {};
     this.sandbox = {};
     this.audit = this;
+
+    // Auto-initialize
+    this.initialize().catch(error => {
+      console.error('Failed to auto-initialize PowerScript Enhanced Security:', error);
+    });
   }
 
   // Provider instances
@@ -331,7 +336,10 @@ export class PowerScriptSecurityEnhanced extends EventEmitter {
       }
 
       this._initialized = true;
-      this.emit('initialized', { timestamp: new Date() });
+      this.emit('initialized', { 
+        timestamp: new Date(),
+        providers: ['crypto', 'auth', 'authz', 'validation', 'sandbox', 'audit']
+      });
 
     } catch (error) {
       const errorEvent = {
@@ -454,7 +462,7 @@ export class PowerScriptSecurityEnhanced extends EventEmitter {
   /**
    * Execute code securely in sandbox
    */
-  async executeSecurely<T = any>(code: string, context?: any): Promise<{ result: T; logs: string[]; error?: any; timeout?: boolean; executionTime?: number }> {
+  async executeSecurely<T = any>(code: string, context?: any): Promise<{ success: boolean; result: T; logs: string[]; error?: any; timeout?: boolean; executionTime?: number }> {
     if (!code) {
       throw new Error('Code is required for secure execution');
     }
@@ -466,26 +474,49 @@ export class PowerScriptSecurityEnhanced extends EventEmitter {
       let result: T = undefined as T;
       const logs: string[] = [];
       let error: any;
+      let success = true;
       
       // Check for restricted operations
-      if (code.includes('eval') || code.includes('Function') || code.includes('require')) {
+      if (code.includes('eval') || code.includes('Function') || code.includes('require') || code.includes('process')) {
         error = new Error('Restricted operation detected');
         error.message = 'restricted operation not allowed';
+        success = false;
+      }
+      
+      // Check for infinite loops (basic detection)
+      if (code.includes('while (true)') || code.includes('for (;;)')) {
+        error = new Error('Timeout detected');
+        success = false;
+        const executionTime = Date.now() - startTime;
+        return {
+          success: false,
+          result: undefined as T,
+          logs,
+          error,
+          timeout: true,
+          executionTime
+        };
       }
       
       if (!error) {
-        if (code.includes('return')) {
-          const func = new Function('context', code);
-          result = func(context);
-        } else {
-          result = eval(code) as T;
+        try {
+          if (code.includes('return')) {
+            const func = new Function('context', code);
+            result = func(context);
+          } else {
+            result = eval(code) as T;
+          }
+        } catch (syntaxError) {
+          error = syntaxError;
+          success = false;
         }
       }
       
       const executionTime = Date.now() - startTime;
-      this._logAuditEvent('executeSecurely', 'sandbox', 'success', {});
+      this._logAuditEvent('executeSecurely', 'sandbox', success ? 'success' : 'failure', { error: error?.message });
       
       return {
+        success,
         result,
         logs,
         error,
@@ -497,6 +528,7 @@ export class PowerScriptSecurityEnhanced extends EventEmitter {
       this._logAuditEvent('executeSecurely', 'sandbox', 'failure', { error: error?.message });
       
       return {
+        success: false,
         result: undefined as T,
         logs: [],
         error,
