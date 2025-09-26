@@ -56,6 +56,9 @@ export { PowerScriptAnalytics } from './analytics';
 // Graphics Module
 export * from './graphics';
 
+// Client-Side Framework (EIPS) - For browser/React/Vue/Angular development
+export * as Client from './client';
+
 // Patterns Module
 export { 
   PowerScriptPatterns,
@@ -73,6 +76,17 @@ export {
 
 // Cloud & Deployment Module (Module 19)
 export { PowerScriptCloud } from './cloud';
+
+// Server & Microservices Framework (Module 26)
+export { 
+  PowerScriptServer,
+  server,
+  Router,
+  Middleware,
+  LoadBalancer,
+  ServiceDiscovery,
+  Gateway
+} from './server';
 
 // Testing & Debugging Module (Module 24)
 import PowerScriptTest, { testFramework } from './testing';

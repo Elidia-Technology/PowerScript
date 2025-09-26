@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../build/client",
+    "declaration": true,
+    "declarationMap": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "./index.ts",
+    "./types.ts"
+  ],
+  "exclude": [
+    "./react.ts",
+    "../node_modules",
+    "../build",
+    "../test"
+  ]
+}

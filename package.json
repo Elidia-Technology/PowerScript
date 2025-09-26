@@ -1,27 +1,118 @@
 {
   "name": "powerscript",
   "version": "1.0.0",
-  "description": "A comprehensive Node.js module for PowerScript style development",
+  "description": "Comprehensive PowerScript Ecosystem - AS3-style development for Node.js, browsers, React, Vue, Angular with multimedia, games, server tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
     "ps": "./bin/ps.js",
-    "ps-cloud": "./bin/cli/cloud.js"
+    "ps-cloud": "./bin/cli/cloud.js",
+    "eips": "./cli/eips.js",
+    "eips-build": "./cli/eips-build.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:main && npm run build:client && npm run build:cli",
+    "build:main": "tsc",
+    "build:client": "tsc --project src/client/tsconfig.json",
+    "build:cli": "tsc cli/ps.ts cli/eips-build.ts --outDir cli --target ES2020 --module commonjs --skipLibCheck",
+    "dev": "tsc --watch",
     "test": "jest",
-    "test:simple": "ts-node test/simple-animation-test.ts"
+    "test:simple": "ts-node test/simple-animation-test.ts",
+    "test:client": "jest --testMatch='**/client/**/*.test.{js,ts}'",
+    "lint": "eslint src/**/*.ts cli/**/*.ts",
+    "start:demo": "node demo/server.js"
   },
   "keywords": [
-    "actionscript",
+    "powerscript",
+    "actionscript3",
+    "as3",
     "typescript",
-    "animations"
+    "multimedia",
+    "games",
+    "animation",
+    "graphics",
+    "audio",
+    "video",
+    "react",
+    "vue",
+    "angular",
+    "client-side",
+    "server-side",
+    "fullstack",
+    "eips",
+    "canvas",
+    "html5"
   ],
   "author": "PowerScript Team",
   "license": "MIT",
+  "homepage": "https://github.com/SaleemLww/PowerScript#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SaleemLww/PowerScript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SaleemLww/PowerScript/issues"
+  },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/",
+    "cli/",
+    "bin/",
+    "demo/",
+    "examples/",
+    "README.md",
+    "LICENSE",
+    "ActionScript3-Style-Guide.md"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client/index.js",
+      "require": "./dist/client/index.js",
+      "types": "./dist/client/index.d.ts"
+    },
+    "./client/react": {
+      "import": "./dist/client/react.js",
+      "require": "./dist/client/react.js",
+      "types": "./dist/client/react.d.ts"
+    },
+    "./graphics": {
+      "import": "./dist/graphics/index.js",
+      "require": "./dist/graphics/index.js",
+      "types": "./dist/graphics/index.d.ts"
+    },
+    "./multimedia": {
+      "import": "./dist/multimedia/index.js",
+      "require": "./dist/multimedia/index.js",
+      "types": "./dist/multimedia/index.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server/index.js",
+      "require": "./dist/server/index.js",
+      "types": "./dist/server/index.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "@angular/core": ">=12.0.0",
+    "react": ">=16.8.0 || >=17.0.0 || >=18.0.0",
+    "vue": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    }
   },
   "dependencies": {
     "commander": "^6.2.1",
@@ -31,7 +122,13 @@
     "@types/commander": "^2.12.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^18.16.0",
+    "@types/react": "^18.0.0",
+    "@types/terser": "^3.12.0",
+    "eslint": "^8.0.0",
     "jest": "^30.1.3",
+    "jest-environment-jsdom": "^30.1.2",
+    "jsdom": "^27.0.0",
+    "terser": "^5.44.0",
     "ts-jest": "^29.4.4",
     "ts-node": "^10.9.0",
     "typescript": "^5.9.2"

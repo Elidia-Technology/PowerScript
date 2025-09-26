@@ -1,0 +1,99 @@
+{
+  "name": "eips-client",
+  "version": "1.0.0",
+  "description": "EIPS Client-Side Framework - AS3-style multimedia and game development for modern web frameworks",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run build:cjs && npm run build:esm && npm run build:types",
+    "build:cjs": "tsc --module commonjs --outDir dist/cjs",
+    "build:esm": "tsc --module es2020 --outDir dist/esm",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist/types",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "actionscript3",
+    "as3",
+    "graphics",
+    "multimedia",
+    "games",
+    "animation",
+    "canvas",
+    "audio",
+    "video",
+    "react",
+    "vue",
+    "angular",
+    "client-side",
+    "framework"
+  ],
+  "author": "PowerScript Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SaleemLww/PowerScript.git",
+    "directory": "src/client"
+  },
+  "homepage": "https://github.com/SaleemLww/PowerScript#readme",
+  "bugs": {
+    "url": "https://github.com/SaleemLww/PowerScript/issues"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0 || >=17.0.0 || >=18.0.0",
+    "vue": ">=3.0.0",
+    "@angular/core": ">=12.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {},
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./react": {
+      "import": "./dist/esm/react.js",
+      "require": "./dist/cjs/react.js",
+      "types": "./dist/types/react.d.ts"
+    },
+    "./vue": {
+      "import": "./dist/esm/vue.js",
+      "require": "./dist/cjs/vue.js",
+      "types": "./dist/types/vue.d.ts"
+    },
+    "./angular": {
+      "import": "./dist/esm/angular.js",
+      "require": "./dist/cjs/angular.js",
+      "types": "./dist/types/angular.d.ts"
+    }
+  }
+}

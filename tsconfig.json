@@ -52,7 +52,10 @@
     "tests/**/*",
     "cli/**/*",
     "src/core/PowerScriptCLI.ts",
+    "src/client/react.ts",
     "dist",
+    "build",
+    "src/build",
     "docs",
     "examples",
     "*.config.js"
