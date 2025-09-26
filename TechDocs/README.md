@@ -1,14 +1,14 @@
-# EIPS (Elite India PowerScript) - Technical Documentation
+# EIPS (PowerScript) - Technical Documentation
 
 ## Overview
 
 **Package Name:** eips  
 **Version:** 1.0.0  
-**Description:** A comprehensive PowerScript library by Elite India that provides ActionScript 3-style development capabilities for Node.js with advanced AI/ML, cloud computing, security, graphics, and multimedia features.
+**Description:** A comprehensive PowerScript (EIPS) library that simplifies development while providing advanced capabilities such as AI/ML, cloud computing, security, graphics, multimedia, and game development.
 
 ## Purpose
 
-EIPS is designed to bridge the gap between ActionScript 3 development patterns and modern Node.js applications. It provides a unified API for developers to build sophisticated applications with built-in support for:
+EIPS is designed to bridge the gap between traditional development patterns and modern Node.js applications. It offers a unified API that empowers developers to build sophisticated applications with built-in support for:
 
 - AI and Machine Learning capabilities
 - Advanced graphics and multimedia processing
@@ -16,6 +16,8 @@ EIPS is designed to bridge the gap between ActionScript 3 development patterns a
 - Real-time networking and communication
 - Database integration and analytics
 - Cloud computing and distributed systems
+- Games development capabilities
+- And lot of more ...
 
 ## Installation
 

@@ -1,6 +1,6 @@
 "use strict";
 /**
- * PowerScript ByteArray - ActionScript 3 style ByteArray implementation
+ * PowerScript ByteArray - PowerScript style ByteArray implementation
  *
  * Provides AS3-compatible binary data manipulation functionality
  * using modern JavaScript ArrayBuffer, Uint8Array, and DataView.
@@ -22,7 +22,7 @@ class ByteArrayEvent extends EventDispatcher_1.Event {
 }
 exports.ByteArrayEvent = ByteArrayEvent;
 /**
- * ActionScript 3 style ByteArray implementation using ArrayBuffer and DataView
+ * PowerScript style ByteArray implementation using ArrayBuffer and DataView
  */
 class ByteArray extends EventDispatcher_1.EventDispatcher {
     _buffer;

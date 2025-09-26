@@ -1,7 +1,7 @@
 /**
  * PowerScript Compiler - Main compiler class
  * 
- * Transforms ActionScript 3 style code to modern JavaScript/TypeScript
+ * Transforms PowerScript style code to modern JavaScript/TypeScript
  * with full ES6+ features and Node.js compatibility.
  */
 

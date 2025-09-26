@@ -1,5 +1,5 @@
 /**
- * PowerScript - ActionScript 3 style Node.js development with AI/ML capabilities
+ * PowerScript - PowerScript style Node.js development with AI/ML capabilities
  * 
  * Main entry point that exports all PowerScript modules and provides
  * a unified API for developers to access AS3-style classes and modern

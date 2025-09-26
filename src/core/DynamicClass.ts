@@ -2,7 +2,7 @@
  * PowerScript AS3 Dynamic Classes Support
  * 
  * Provides dynamic class creation and runtime manipulation capabilities
- * similar to ActionScript 3's dynamic classes.
+ * similar to PowerScript's dynamic classes.
  */
 
 export interface DynamicClassOptions {

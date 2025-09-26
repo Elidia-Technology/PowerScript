@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Core PowerScript module - Provides ActionScript 3 style classes and utilities
+ * Core PowerScript module - Provides PowerScript style classes and utilities
  * This is the foundation that enables AS3-style development in Node.js
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {

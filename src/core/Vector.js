@@ -1,6 +1,6 @@
 "use strict";
 /**
- * PowerScript Vector - ActionScript 3 style Vector implementation
+ * PowerScript Vector - PowerScript style Vector implementation
  *
  * Provides AS3-compatible Vector functionality with type safety and
  * enhanced array-like operations for high-performance collections.
@@ -17,7 +17,7 @@ class VectorEvent extends EventDispatcher_1.Event {
 }
 exports.VectorEvent = VectorEvent;
 /**
- * ActionScript 3 style Vector class with type safety
+ * PowerScript style Vector class with type safety
  */
 class Vector extends EventDispatcher_1.EventDispatcher {
     _items = [];

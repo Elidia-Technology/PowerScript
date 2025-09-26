@@ -1,5 +1,5 @@
 /**
- * PowerScript Timer - ActionScript 3 style Timer implementation
+ * PowerScript Timer - PowerScript style Timer implementation
  * 
  * Provides AS3-compatible timer functionality with event-driven callbacks
  * and modern async/await support.
@@ -20,7 +20,7 @@ export class TimerEvent extends Event {
 }
 
 /**
- * ActionScript 3 style Timer class with modern Node.js features
+ * PowerScript style Timer class with modern Node.js features
  */
 export class Timer extends EventDispatcher {
   private _delay: number;

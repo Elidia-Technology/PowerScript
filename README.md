@@ -1,143 +1,112 @@
-# PowerScript Documentation
+# EIPS (PowerScript) - Technical Documentation
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![ActionScript Style](https://img.shields.io/badge/ActionScript-Style-red?style=for-the-badge)](https://en.wikipedia.org/wiki/ActionScript)
+## Overview
 
-**PowerScript** is a comprehensive TypeScript/Node.js framework that brings ActionScript 3.0 style development to modern JavaScript with built-in AI/ML capabilities, distributed systems support, and cloud integration.
+**Package Name:** eips  
+**Version:** 1.0.0  
+**Description:** A comprehensive PowerScript (EIPS) library that simplifies development while providing advanced capabilities such as AI/ML, cloud computing, security, graphics, multimedia, and game development.
 
-## 🚀 Quick Start
+## Purpose
 
-```javascript
-const { PowerScript, Timer, Logger, Vector } = require('powerscript');
+EIPS is designed to bridge the gap between traditional development patterns and modern Node.js applications. It offers a unified API that empowers developers to build sophisticated applications with built-in support for:
 
-// ActionScript-style development
-const ps = new PowerScript();
-const timer = new Timer(1000);
-const logger = new Logger();
-const vector = new Vector();
+- AI and Machine Learning capabilities
+- Advanced graphics and multimedia processing
+- Secure authentication and authorization
+- Real-time networking and communication
+- Database integration and analytics
+- Cloud computing and distributed systems
+- Games development capabilities
+- And lot of more ...
 
-// Modern AI/ML capabilities
-const ai = ps.getAI();
-const security = ps.getSecurity();
+## Installation
+
+```bash
+npm install eips
 ```
 
-## 📚 Documentation Structure
+## Quick Start
 
-### 🏗️ Core Modules
-- **[Core](./modules/core.md)** - AS3-style base classes and utilities
-- **[Compiler](./modules/compiler.md)** - ActionScript-like compilation and code transformation
-- **[Patterns](./modules/patterns.md)** - Design patterns and architectural utilities
+```typescript
+import { PowerScript } from "eips";
 
-### 🤖 AI & Machine Learning
-- **[AI](./modules/ai.md)** - Basic AI capabilities and integrations
-- **[AI Enhanced](./modules/ai-enhanced.md)** - Advanced AI with local model support
-- **[Machine Learning](./modules/ml.md)** - ML algorithms and model management
+// Initialize PowerScript
+const ps = await PowerScript.initialize();
 
-### 🔒 Security & Authentication
-- **[Security](./modules/security.md)** - Enterprise-grade security features
-- **[Security Enhanced](./modules/security-enhanced.md)** - Advanced security with sandboxing
-- **[Security Simple](./modules/security-simple.md)** - Lightweight security utilities
+// Access different modules
+const ai = PowerScript.ai;
+const graphics = PowerScript.graphics;
+const security = PowerScript.security;
+```
 
-### 🌐 Networking & Communication
-- **[Networking](./modules/networking.md)** - AS3-style networking and HTTP clients
-- **[Networking Enhanced](./modules/networking-enhanced.md)** - Advanced networking with P2P support
+## Dependencies
 
-### 🎨 Graphics & Multimedia
-- **[Graphics](./modules/graphics.md)** - 2D/3D graphics and Canvas manipulation
-- **[Multimedia](./modules/multimedia.md)** - Audio, video, and media processing
+### Core Dependencies
+- `@types/commander`: ^2.12.0
+- `commander`: ^14.0.1
+- `vm2`: ^3.9.19
 
-### 💾 Data & Storage
-- **[Database](./modules/database.md)** - Multi-database support and ORM
-- **[Filesystem](./modules/filesystem.md)** - File operations and storage management
+### Development Dependencies
+- `@types/jest`: ^30.0.0
+- `@types/node`: ^18.16.0
+- `jest`: ^30.1.3
+- `ts-jest`: ^29.4.4
+- `ts-node`: ^10.9.0
+- `typescript`: ^5.9.2
 
-### ⚡ System & Performance
-- **[Concurrency](./modules/concurrency.md)** - Multi-threading and parallel processing
-- **[Analytics](./modules/analytics.md)** - Performance monitoring and metrics
+## Module Structure
 
-### ☁️ Cloud & Distributed
-- **[Cloud](./modules/cloud.md)** - Multi-cloud provider support and deployment
+EIPS is organized into the following main modules:
 
-## 🎯 Usage Guides
+### Phase 1: Core & Compiler
+- [Core Runtime](./modules/core/README.md) - Basic PowerScript runtime and utilities
+- [Compiler](./modules/compiler/README.md) - PowerScript code compilation
 
-### Getting Started
-- **[Installation Guide](./guides/installation.md)** - Setup and dependencies
-- **[ActionScript Style Guide](./guides/actionscript-style.md)** - Writing AS3-style code
-- **[Migration from AS3](./guides/migration.md)** - Porting ActionScript projects
+### Phase 2: AI & Machine Learning
+- [AI Module](./modules/ai/README.md) - Artificial Intelligence capabilities
+- [ML Module](./modules/ml/README.md) - Machine Learning algorithms and models
 
-### Development Patterns
-- **[Project Structure](./guides/project-structure.md)** - Organizing PowerScript projects
-- **[Best Practices](./guides/best-practices.md)** - Recommended coding patterns
-- **[Performance Optimization](./guides/performance.md)** - Optimization techniques
+### Phase 3: Security & Authentication
+- [Security](./modules/security/README.md) - Advanced security features
+- [Security Simple](./modules/security-simple/README.md) - Simplified security utilities
 
-### Integration
-- **[Framework Integration](./guides/integration.md)** - Using with Express, Electron, etc.
-- **[Deployment](./guides/deployment.md)** - Production deployment strategies
-- **[Testing](./guides/testing.md)** - Testing PowerScript applications
+### Phase 4: Data & Storage
+- [Database](./modules/database/README.md) - Database integration and ORM
+- [Filesystem](./modules/filesystem/README.md) - File system operations
 
-## 📖 Examples
+### Phase 5: Graphics & Multimedia
+- [Graphics](./modules/graphics/README.md) - 2D/3D graphics rendering
+- [Multimedia](./modules/multimedia/README.md) - Audio/video processing
 
-### Basic Examples
-- **[Hello World](./examples/hello-world.md)** - Your first PowerScript application
-- **[AS3 Porting](./examples/as3-porting.md)** - Converting ActionScript code
-- **[Event Handling](./examples/events.md)** - Event-driven programming
+### Phase 6: Networking & Communication
+- [Networking](./modules/networking/README.md) - HTTP, WebSocket, and real-time communication
+- [Networking Enhanced](./modules/networking-enhanced/README.md) - Advanced networking features
 
-### AI & ML Examples
-- **[Text Generation](./examples/ai-text.md)** - AI-powered text generation
-- **[Image Processing](./examples/ai-images.md)** - AI image manipulation
-- **[ML Model Training](./examples/ml-training.md)** - Training custom models
+### Phase 7: Analytics & Monitoring
+- [Analytics](./modules/analytics/README.md) - Data analytics and metrics collection
 
-### Advanced Examples
-- **[Real-time Chat](./examples/realtime-chat.md)** - WebSocket-based chat application
-- **[Game Development](./examples/game-dev.md)** - Creating games with PowerScript
-- **[Microservices](./examples/microservices.md)** - Building distributed services
+### Phase 8: Patterns & Architecture
+- [Patterns](./modules/patterns/README.md) - Design patterns and architectural utilities
+- [Concurrency](./modules/concurrency/README.md) - Parallel processing and task management
 
-## 🔧 API Reference
+### Phase 9: Cloud & Advanced Features
+- [Cloud](./modules/cloud/README.md) - Cloud computing and distributed systems
+- [AI Enhanced](./modules/ai-enhanced/README.md) - Advanced AI capabilities
+- [Security Enhanced](./modules/security-enhanced/README.md) - Enterprise-grade security
+- [Animation](./modules/animation/README.md) - Animation and motion graphics
 
-### Core Classes
-| Class | Description | ActionScript Equivalent |
-|-------|-------------|------------------------|
-| `Vector` | Dynamic array with AS3 methods | `Vector.<T>` |
-| `ByteArray` | Binary data manipulation | `ByteArray` |
-| `Timer` | Time-based operations | `Timer` |
-| `EventDispatcher` | Event handling system | `EventDispatcher` |
-| `Logger` | Logging and debugging | `trace()` |
 
-### Module APIs
-- **[Complete API Reference](./api/README.md)** - Full API documentation
-- **[Type Definitions](./api/types.md)** - TypeScript type definitions
-- **[Error Codes](./api/errors.md)** - Error handling reference
+## Support
 
-## 🛠️ Development
-
-### Contributing
-- **[Contributing Guide](./CONTRIBUTING.md)** - How to contribute
-- **[Code Standards](./CODE_STANDARDS.md)** - Coding conventions
-- **[Testing Guide](./TESTING.md)** - Testing requirements
-
-### Architecture
-- **[Architecture Overview](./architecture/README.md)** - System architecture
-- **[Module Design](./architecture/modules.md)** - Module structure
-- **[Extension Points](./architecture/extensions.md)** - Extending PowerScript
-
-## 📊 Compatibility
-
-| Feature | Node.js | Browser | Electron | React Native |
-|---------|---------|---------|----------|--------------|
-| Core | ✅ | ✅ | ✅ | ✅ |
-| AI/ML | ✅ | 🔶* | ✅ | 🔶* |
-| Security | ✅ | 🔶* | ✅ | 🔶* |
-| Networking | ✅ | 🔶* | ✅ | ✅ |
-| Graphics | ✅ | ✅ | ✅ | ✅ |
-| Database | ✅ | ❌ | ✅ | 🔶* |
+For technical support and documentation, please refer to the individual module documentation or contact the Saleem Ahmad  PowerScript team (Elite India).
 
 *🔶 = Limited functionality or requires additional setup*
 
 ## 📋 Requirements
 
 ### Minimum Requirements
-- **Node.js**: 18.0.0 or higher
-- **npm**: 8.0.0 or higher
+- **Node.js**: 24.0.0 or higher
+- **npm**: 9.8.0 or higher
 - **TypeScript**: 4.8.0 or higher (for development)
 
 ### Optional Dependencies
@@ -153,8 +122,7 @@ PowerScript is released under the MIT License. See [LICENSE](../LICENSE) for det
 
 - **GitHub**: [PowerScript Repository](https://github.com/PowerScript/PowerScript)
 - **Discord**: [PowerScript Community](https://discord.gg/powerscript)
-- **Stack Overflow**: Tag your questions with `powerscript`
+- **Stack Overflow**: Tag your questions with `EIPS` or `powerscript`
 
----
 
-*Built with ❤️ for ActionScript developers transitioning to modern JavaScript*
+

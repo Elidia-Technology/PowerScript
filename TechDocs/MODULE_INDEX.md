@@ -1,4 +1,4 @@
-# EIPS (Elite India PowerScript) - Module Index
+# EIPS (PowerScript) - Module Index
 
 ## Complete Module Documentation
 
@@ -30,7 +30,7 @@ Complete overview, installation, and getting started guide.
 - **[Filesystem](./modules/filesystem/README.md)** - File system operations and storage
 
 ### Phase 5: Graphics & Media
-- **[Graphics](./modules/graphics/README.md)** - 2D/3D graphics, ActionScript 3-style display objects
+- **[Graphics](./modules/graphics/README.md)** - 2D/3D graphics display objects
 - **[Multimedia](./modules/multimedia/README.md)** - Audio, video, and streaming capabilities
 
 ### Phase 6: Communication

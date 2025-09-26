@@ -6,13 +6,13 @@
  * **Module Name:** PowerScript Graphics  
  * **Package:** eips  
  * **Phase:** 5  
- * **Description:** Comprehensive 2D/3D graphics rendering system with ActionScript 3-style vector drawing API and modern Canvas/WebGL backend support.
+ * **Description:** Comprehensive 2D/3D graphics rendering system with PowerScript-style vector drawing API and modern Canvas/WebGL backend support.
  *
  * ## Purpose
  * 
  * The Graphics module provides:
  * - Vector drawing capabilities with fills, strokes, and shapes
- * - ActionScript 3-style display object hierarchy (Stage, DisplayObject, Sprite, etc.)
+ * - PowerScript-style display object hierarchy (Stage, DisplayObject, Sprite, etc.)
  * - Canvas and WebGL rendering backends
  * - Advanced graphics features (gradients, bitmap fills, transformations)
  * - Animation and motion graphics support
@@ -39,7 +39,7 @@
 /**
  * ## Graphics Class
  * 
- * Vector drawing API for display objects that provides ActionScript 3-style
+ * Vector drawing API for display objects that provides PowerScript-style
  * drawing capabilities with modern backend support.
  * 
  * ### Constructor

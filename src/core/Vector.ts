@@ -1,5 +1,5 @@
 /**
- * PowerScript Vector - ActionScript 3 style Vector implementation
+ * PowerScript Vector - PowerScript style Vector implementation
  * 
  * Provides AS3-compatible Vector functionality with type safety and
  * enhanced array-like operations for high-performance collections.
@@ -17,7 +17,7 @@ export class VectorEvent extends Event {
 }
 
 /**
- * ActionScript 3 style Vector class with type safety
+ * PowerScript style Vector class with type safety
  */
 export class Vector<T> extends EventDispatcher implements Iterable<T> {
   private _items: T[] = [];

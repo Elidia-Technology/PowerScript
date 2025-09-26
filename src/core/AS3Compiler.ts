@@ -2,7 +2,7 @@
  * PowerScript AS3 Compilation Pipeline
  * 
  * Enhanced compiler that provides better AS3 syntax support, dynamic classes,
- * and improved error handling for ActionScript 3 to TypeScript compilation.
+ * and improved error handling for PowerScript to TypeScript compilation.
  */
 
 import { PowerScriptCompiler } from '../compiler/PowerScriptCompiler';

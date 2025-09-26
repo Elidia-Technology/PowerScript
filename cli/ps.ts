@@ -64,7 +64,7 @@ class PowerScriptCLI {
   private showHelp(): void {
     console.log(`
 PowerScript CLI v${this.powerscript.version}
-ActionScript 3 style Node.js development with AI/ML capabilities
+PowerScript style Node.js development with AI/ML capabilities
 
 Usage:
   powerscript <command> [options]

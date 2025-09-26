@@ -2,7 +2,7 @@
  * PowerScript Enhanced Networking Module - URLLoader
  * 
  * AS3-compatible URLLoader class for executing HTTP requests
- * Provides familiar ActionScript 3 API with modern async/await support
+ * Provides familiar PowerScript API with modern async/await support
  */
 
 import { EventEmitter } from 'events';
@@ -39,7 +39,7 @@ export interface URLLoaderEventMap {
 /**
  * URLLoader - AS3-compatible HTTP request executor
  * 
- * Familiar ActionScript 3 style API with modern Promise support:
+ * Familiar PowerScript style API with modern Promise support:
  * ```typescript
  * const loader = new URLLoader();
  * loader.on('complete', (response) => console.log(response.data));

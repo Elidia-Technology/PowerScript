@@ -51,7 +51,7 @@ console.log('⚡ TECHNICAL HIGHLIGHTS:');
 console.log('   • Event-driven architecture throughout all modules');
 console.log('   • Dependency injection container for service management');
 console.log('   • Cross-platform compatibility (Node.js/Browser)');
-console.log('   • ActionScript 3 API compatibility maintained');
+console.log('   • PowerScript API compatibility maintained');
 console.log('   • Modern JavaScript/TypeScript features integrated');
 console.log('   • Comprehensive error handling and logging');
 console.log('   • Memory management and performance optimization');
@@ -68,7 +68,7 @@ console.log('');
 
 // Core Features Working
 console.log('✅ CORE FEATURES WORKING:');
-console.log('   • ActionScript 3 event system (EventDispatcher)');
+console.log('   • PowerScript event system (EventDispatcher)');
 console.log('   • Timer with modern async/await support');
 console.log('   • Vector collections with type safety');
 console.log('   • ByteArray for binary data manipulation');

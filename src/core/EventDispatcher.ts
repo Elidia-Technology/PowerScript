@@ -1,5 +1,5 @@
 /**
- * PowerScript EventDispatcher - ActionScript 3 style event system
+ * PowerScript EventDispatcher - PowerScript style event system
  * 
  * Provides the foundation for event-driven programming in PowerScript,
  * maintaining compatibility with AS3 event patterns while adding modern features.
@@ -74,7 +74,7 @@ export interface IEventDispatcher {
 }
 
 /**
- * ActionScript 3 style EventDispatcher implementation
+ * PowerScript style EventDispatcher implementation
  * Supports event bubbling, capturing, and priority-based listeners
  */
 export class EventDispatcher implements IEventDispatcher {

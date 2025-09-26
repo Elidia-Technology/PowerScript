@@ -1,7 +1,7 @@
 /**
  * PowerScript AS3 Utilities Module
  * 
- * This module provides ActionScript 3 compatible utility classes and functions
+ * This module provides PowerScript compatible utility classes and functions
  * including Timer, enhanced Math, Array, Vector, and ByteArray utilities.
  */
 

@@ -1,6 +1,6 @@
 "use strict";
 /**
- * PowerScript EventDispatcher - ActionScript 3 style event system
+ * PowerScript EventDispatcher - PowerScript style event system
  *
  * Provides the foundation for event-driven programming in PowerScript,
  * maintaining compatibility with AS3 event patterns while adding modern features.
@@ -48,7 +48,7 @@ class Event {
 }
 exports.Event = Event;
 /**
- * ActionScript 3 style EventDispatcher implementation
+ * PowerScript style EventDispatcher implementation
  * Supports event bubbling, capturing, and priority-based listeners
  */
 class EventDispatcher {

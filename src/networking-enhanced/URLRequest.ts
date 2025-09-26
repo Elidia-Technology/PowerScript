@@ -2,7 +2,7 @@
  * PowerScript Enhanced Networking Module - URLRequest
  * 
  * AS3-compatible URLRequest class for HTTP requests
- * Provides familiar ActionScript 3 API while leveraging modern web standards
+ * Provides familiar PowerScript API while leveraging modern web standards
  */
 
 export interface URLRequestHeader {
@@ -29,7 +29,7 @@ export interface URLRequestOptions {
 /**
  * URLRequest - AS3-compatible HTTP request builder
  * 
- * Familiar ActionScript 3 style API:
+ * Familiar PowerScript style API:
  * ```typescript
  * const request = new URLRequest('https://api.example.com/data');
  * request.method = 'POST';

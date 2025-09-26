@@ -93,7 +93,7 @@ async function runEnhancedAITests(): Promise<void> {
 
     // Test 5: Text summarization (CPU-friendly)
     console.log('\n📋 Test 5: Text Summarization');
-    const longText = 'PowerScript is a comprehensive development framework that combines the power of ActionScript 3 with modern web technologies. It provides advanced AI capabilities, database integration, networking features, and much more. The framework is designed to be modular, extensible, and developer-friendly.';
+    const longText = 'PowerScript is a comprehensive development framework that combines the power of PowerScript with modern web technologies. It provides advanced AI capabilities, database integration, networking features, and much more. The framework is designed to be modular, extensible, and developer-friendly.';
     const summaryConfig: SummarizationConfig = {
       maxLength: 50,
       focus: 'technical'

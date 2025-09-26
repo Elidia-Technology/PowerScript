@@ -1,5 +1,5 @@
 /**
- * PowerScript ByteArray - ActionScript 3 style ByteArray implementation
+ * PowerScript ByteArray - PowerScript style ByteArray implementation
  * 
  * Provides AS3-compatible binary data manipulation functionality
  * using modern JavaScript ArrayBuffer, Uint8Array, and DataView.
@@ -22,7 +22,7 @@ export class ByteArrayEvent extends Event {
 }
 
 /**
- * ActionScript 3 style ByteArray implementation using ArrayBuffer and DataView
+ * PowerScript style ByteArray implementation using ArrayBuffer and DataView
  */
 export class ByteArray extends EventDispatcher {
   private _buffer: ArrayBuffer;

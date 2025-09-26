@@ -42,7 +42,7 @@ export class PowerScriptCLI {
     private setupCommands(): void {
         this.program
             .name('ps')
-            .description('PowerScript CLI - ActionScript 3 to TypeScript/JavaScript compiler')
+            .description('PowerScript CLI - PowerScript to TypeScript/JavaScript compiler')
             .version('1.0.0');
 
         // Compile command

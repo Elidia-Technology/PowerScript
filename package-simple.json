@@ -1,7 +1,7 @@
 {
   "name": "powerscript",
   "version": "1.0.0",
-  "description": "A comprehensive Node.js module for ActionScript 3 style development",
+  "description": "A comprehensive Node.js module for PowerScript style development",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

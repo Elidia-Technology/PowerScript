@@ -2,7 +2,7 @@
  * PowerScript Graphics Module - Advanced Graphics & Rendering System
  * 
  * This module provides AS3-style display list architecture with modern rendering backends.
- * Supports Canvas 2D and WebGL rendering with a familiar ActionScript 3 display hierarchy.
+ * Supports Canvas 2D and WebGL rendering with a familiar PowerScript display hierarchy.
  */
 
 // Core display objects (implemented)
