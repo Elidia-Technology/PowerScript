@@ -98,7 +98,7 @@ EIPS is organized into the following main modules:
 
 ## Support
 
-For technical support and documentation, please refer to the individual module documentation or contact the Saleem Ahmad  PowerScript team (Elite India).
+For technical support and documentation, please refer to the individual module documentation or contact the Saleem Ahmad  PowerScript team (Elidia Technology Pvt Ltd).
 
 *🔶 = Limited functionality or requires additional setup*
 

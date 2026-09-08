@@ -2,7 +2,7 @@
 
 ## Abstract
 
-PowerScript (Elite India PowerScript) is a comprehensive development platform that provides modern JavaScript/TypeScript developers with advanced programming capabilities inspired by PowerScript patterns. This document defines the technical specifications, API reference, and implementation guidelines for the PowerScript ecosystem.
+PowerScript (Elidia Technology Pvt Ltd PowerScript) is a comprehensive development platform that provides modern JavaScript/TypeScript developers with advanced programming capabilities inspired by PowerScript patterns. This document defines the technical specifications, API reference, and implementation guidelines for the PowerScript ecosystem.
 
 ## Table of Contents
 
